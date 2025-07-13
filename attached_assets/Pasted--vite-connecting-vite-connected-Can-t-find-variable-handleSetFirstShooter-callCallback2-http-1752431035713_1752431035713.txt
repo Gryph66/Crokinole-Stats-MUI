@@ -1,0 +1,19 @@
+[vite] connecting...
+[vite] connected.
+Can't find variable: handleSetFirstShooter
+callCallback2@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:3678:27
+dispatchEvent@[native code]
+invokeGuardedCallbackDev@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:3703:37
+invokeGuardedCallback@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:3737:44
+invokeGuardedCallbackAndCatchFirstError@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:3740:38
+executeDispatch@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:7044:50
+processDispatchQueueItemsInOrder@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:7064:30
+processDispatchQueue@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:7073:45
+dispatchEventsForPlugins@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:7081:31
+batchedUpdates$1@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:18964:22
+batchedUpdates@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:3583:38
+dispatchEventForPluginEventSystem@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:7203:25
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:5482:46
+dispatchEvent@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:5476:92
+dispatchDiscreteEvent@https://6bb83b45-9253-4cc1-a181-9b19e041aea6-00-3m2qd02qw8fkm.worf.replit.dev/node_modules/.vite/deps/chunk-HRZTCQ74.js:5453:26
+Can't find variable: handleSetFirstShooter
