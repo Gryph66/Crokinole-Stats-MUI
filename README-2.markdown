@@ -1,20 +1,7 @@
-# Crokinole Game Tracker
+# Crokinole Stats MUI
 
-## App Screenshots
+![Crokinole Stats MUI Logo](docs/screenshots/logo.png) <!-- Optional: Replace with your app's logo or banner -->
 
-<div align="center">
-  <a href="docs/screenshots/shot_capture.png">
-    <img src="docs/screenshots/shot_capture.png" alt="Disc Tracking" width="400" style="margin: 10px;">
-  </a>
-  <a href="docs/screenshots/metatdata_entryexample.png">
-    <img src="docs/screenshots/metatdata_entryexample.png" alt="Metadata Entry Example" width="200" style="margin: 10px;">
-  </a>
-  <a href="docs/screenshots/shooter_selection.png">
-    <img src="docs/screenshots/shooter_selection.png" alt="Shooter Selection" width="200" style="margin: 10px;">
-  </a>
-</div>
-
----
 **Crokinole Stats MUI** is a modern, web-based application designed to streamline the tracking and analysis of Crokinole matches. Built with React and Material-UI, this tool enables users to input game metadata, record shots on an interactive virtual Crokinole board, manage scores, and export detailed game data as JSON files. Ideal for tournament organizers, players, and enthusiasts, it provides a polished, user-friendly interface for capturing comprehensive match statistics.
 
 ## Live Demo
