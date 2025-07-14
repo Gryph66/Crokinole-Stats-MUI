@@ -57,10 +57,9 @@ const BoardState = ({
   const [discCounts, setDiscCounts] = useState({ 1: 0, 2: 0 });
   const [twentyCounts, setTwentyCounts] = useState({ 1: 0, 2: 0 }); // Running total of 20s
   const rgbCanvasRef = useRef(null); // Hidden canvas for RGB classification
-  const [isRgbLoaded, setIsRgbLoaded] = useState(false); // Track RGB canvas load state
-  const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
   const rgbLoadedRef = useRef(false); // Persistent reference to RGB loaded state
-  const rgbImageRef = useRef(null); // Store the loaded image data
+  const rgbContextRef = useRef(null); // Store the canvas context
+  const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
 
   // Zone definitions from shotclassify.py, with RGB as string keys
   const zoneDefinitions = {
@@ -122,20 +121,11 @@ const BoardState = ({
 
   // Load RGB image once when canvas is mounted
   useEffect(() => {
-    if (!canvasMounted || !rgbCanvasRef.current) {
-      console.log("Waiting for canvas mount or ref...");
-      return;
-    }
-
-    // Don't reload if already loaded successfully
-    if (rgbLoadedRef.current && rgbImageRef.current) {
-      console.log("RGB image already loaded, skipping reload");
+    if (!canvasMounted || !rgbCanvasRef.current || rgbLoadedRef.current) {
       return;
     }
 
     const rgbCanvas = rgbCanvasRef.current;
-    console.log("Loading RGB image for zone detection...");
-
     const loadedImage = new Image();
     loadedImage.crossOrigin = "anonymous";
     
@@ -147,23 +137,14 @@ const BoardState = ({
         context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
         context.drawImage(loadedImage, 0, 0, 600, 500);
         
-        // Store the image reference
-        rgbImageRef.current = loadedImage;
-        
-        // Validate the image data
-        const samplePixel = context.getImageData(300, 250, 1, 1).data;
-        console.log("RGB validation - Center pixel:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
-        
-        console.log("RGB canvas ready for zone detection");
-        setIsRgbLoaded(true);
+        // Store the context for persistent access
+        rgbContextRef.current = context;
         rgbLoadedRef.current = true;
+        
+        console.log("RGB canvas loaded and ready");
       } catch (error) {
         console.error("RGB canvas setup error:", error);
       }
-    };
-    
-    loadedImage.onerror = () => {
-      console.error("Failed to load RGB image");
     };
     
     loadedImage.src = "/crokinole_board_colored.png";
@@ -207,20 +188,18 @@ const BoardState = ({
   };
 
   const getZoneInfo = (x, y) => {
-    // Check if RGB canvas and image are ready
-    if (!rgbLoadedRef.current || !rgbImageRef.current || !rgbCanvasRef.current) {
-      console.warn("RGB canvas not ready - image:", !!rgbImageRef.current, "canvas:", !!rgbCanvasRef.current, "loaded:", rgbLoadedRef.current);
+    if (!rgbLoadedRef.current || !rgbContextRef.current) {
+      console.warn("RGB canvas not ready");
       return { zone: "Unknown", points: 0 };
     }
 
-    const rgbCanvas = rgbCanvasRef.current;
-    const context = rgbCanvas.getContext("2d");
+    const context = rgbContextRef.current;
     
     try {
-      const scaleX = rgbCanvas.width / canvasRef.current.width;
-      const scaleY = rgbCanvas.height / canvasRef.current.height;
-      const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), rgbCanvas.width - 1);
-      const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), rgbCanvas.height - 1);
+      const scaleX = 600 / canvasRef.current.width;
+      const scaleY = 500 / canvasRef.current.height;
+      const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), 599);
+      const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), 499);
       
       const pixel = context.getImageData(scaledX, scaledY, 1, 1).data;
       const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
