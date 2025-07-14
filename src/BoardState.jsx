@@ -61,6 +61,7 @@ const BoardState = ({
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Force reload on mount or restart
   const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
   const rgbLoadedRef = useRef(false); // Persistent reference to RGB loaded state
+  const imageLoadedRef = useRef(false); // Track if image has ever been loaded
 
   // Zone definitions from shotclassify.py, with RGB as string keys
   const zoneDefinitions = {
@@ -127,6 +128,12 @@ const BoardState = ({
       return;
     }
 
+    // Don't reload if already loaded successfully
+    if (imageLoadedRef.current && rgbLoadedRef.current) {
+      console.log("RGB image already loaded, skipping reload");
+      return;
+    }
+
     const rgbCanvas = rgbCanvasRef.current;
     console.log("Attempting to load RGB image, trigger:", refreshTrigger);
 
@@ -157,6 +164,7 @@ const BoardState = ({
                 console.log("RGB image loaded and ready for pixel access");
                 setIsRgbLoaded(true);
                 rgbLoadedRef.current = true; // Set persistent reference
+                imageLoadedRef.current = true; // Mark as successfully loaded
                 resolve();
               } catch (error) {
                 reject(error);
@@ -228,7 +236,7 @@ const BoardState = ({
 
   const getZoneInfo = (x, y) => {
     const rgbCanvas = rgbCanvasRef.current;
-    if (!rgbCanvas || (!isRgbLoaded && !rgbLoadedRef.current)) {
+    if (!rgbCanvas || !rgbLoadedRef.current) {
       console.warn("RGB canvas not loaded or ready - check image load");
       return { zone: "Unknown", points: 0 };
     }
