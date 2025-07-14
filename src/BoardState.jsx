@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ShooterSelection from "./ShooterSelection";
 import ScoreInput from "./ScoreInput";
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton, Grid, Box } from "@mui/material";
 
 const BoardState = ({
   onSaveShot,
@@ -14,6 +14,7 @@ const BoardState = ({
   setStartingPlayer,
   onEndRound,
   rounds,
+  undoLastShot,
 }) => {
   const canvasRef = useRef(null);
   const [boardState, setBoardState] = useState([]);
@@ -277,7 +278,10 @@ const BoardState = ({
     setActiveShooterIndex(index);
   };
 
-  const handleUndoLastShot = () => {
+  const handleUndoLastDisc = () => {
+    if (boardState.length === 0) {
+      return; // No discs to undo
+    }
     setBoardState(boardState.slice(0, -1));
     setDiscCounts((prevCounts) => ({
       ...prevCounts,
@@ -289,6 +293,33 @@ const BoardState = ({
         ...prev,
         [activeShooterIndex + 1]: prev[activeShooterIndex + 1] - 1,
       }));
+    }
+  };
+
+  const handleUndoLastSavedShot = () => {
+    const currentRoundIndex = rounds.findIndex(
+      (round) => round.roundNumber === roundNumber
+    );
+    if (currentRoundIndex < 0 || rounds[currentRoundIndex].shots.length === 0) {
+      return; // No saved shots to undo
+    }
+
+    const undoneShot = undoLastShot();
+    if (undoneShot) {
+      setBoardState(undoneShot.boardState);
+      setPreviousBoardState(undoneShot.boardState);
+      setShotType(undoneShot.shotType);
+      setCurrentPlayerIndex(undoneShot.playerIndex);
+      setActiveShooterIndex(undoneShot.playerIndex);
+      setShotCount(undoneShot.shotCount);
+      setDiscCounts({
+        1: undoneShot.boardState.filter(d => d.owner === players[1]).length,
+        2: undoneShot.boardState.filter(d => d.owner === players[2]).length,
+      });
+      setTwentyCounts({
+        1: undoneShot.boardState.filter(d => d.owner === players[1] && d.zone.includes("20")).length,
+        2: undoneShot.boardState.filter(d => d.owner === players[2] && d.zone.includes("20")).length,
+      });
     }
   };
 
@@ -340,7 +371,7 @@ const BoardState = ({
         exclusive
         onChange={handleShooterChange}
         aria-label="select active shooter"
-        style={{ margin: "0 10px", display: "flex", justifyContent: "center" }}
+        sx={{ maxWidth: '300px', width: '100%' }} // Fixed width to prevent shifting
       >
         <ToggleButton value={0} aria-label="Player 1" style={{ color: players[1]?.color || "#000" }}>
           {players[1]?.name || "Player 1"}
@@ -352,11 +383,19 @@ const BoardState = ({
     );
   };
 
+  // Check if undo last saved shot is possible
+  const canUndoSavedShot = () => {
+    const currentRoundIndex = rounds.findIndex(
+      (round) => round.roundNumber === roundNumber
+    );
+    return currentRoundIndex >= 0 && rounds[currentRoundIndex].shots.length > 0;
+  };
+
   return (
     <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
       <Typography variant="h2" align="center" gutterBottom>Round {roundNumber}</Typography>
       {!firstShooterSet && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
           <Button
             variant="contained"
             size="small"
@@ -373,7 +412,7 @@ const BoardState = ({
           >
             {players[2]?.name || "Player 2"} Shoots First
           </Button>
-        </div>
+        </Box>
       )}
       {firstShooterSet && (
         <>
@@ -387,29 +426,45 @@ const BoardState = ({
             <span style={{ color: players[2].color, marginLeft: "5px" }}>●</span>{" "}
             {discCounts[2]}
           </Typography>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "10px 0", flexWrap: "wrap", gap: "8px" }}>
-            <Button
-              variant="outlined"
-              size="small"
-              color="primary"
-              onClick={handleUndoLastShot}
-            >
-              Undo Last Shot
-            </Button>
+          <Grid container spacing={1} sx={{ margin: "10px 0" }}>
+            <Grid item xs={6} sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={handleUndoLastDisc}
+                disabled={boardState.length === 0}
+              >
+                Undo Last Disc
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={handleUndoLastSavedShot}
+                disabled={!canUndoSavedShot()}
+              >
+                Undo Last Saved Shot
+              </Button>
+            </Grid>
+            <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                onClick={handleSaveShot}
+              >
+                Save Shot
+              </Button>
+            </Grid>
+          </Grid>
+          <Box sx={{ display: "flex", justifyContent: "center", margin: "10px 0" }}>
             <CustomShooterSelection
               activeShooterIndex={activeShooterIndex}
               players={players}
               handleSetActiveShooter={handleSetActiveShooter}
             />
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              onClick={handleSaveShot}
-            >
-              Save Shot
-            </Button>
-          </div>
+          </Box>
           <canvas
             ref={canvasRef}
             width={600}

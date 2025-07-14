@@ -1,8 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, Component } from "react";
 import MetadataForm from "./MetadataForm";
 import BoardState from "./BoardState";
 import theme from './theme';
-import { ThemeProvider, Typography } from '@mui/material';
+import { ThemeProvider, Typography, Box } from '@mui/material';
+
+// Simple error boundary
+class ErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box sx={{ padding: '20px', textAlign: 'center' }}>
+          <Typography variant="h5" color="error">
+            Something went wrong. Please refresh the page or check the console for details.
+          </Typography>
+        </Box>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const App = () => {
   const [metadata, setMetadata] = useState(null);
@@ -61,6 +83,30 @@ const App = () => {
       updatedShots[shotData.playerIndex] += 1;
       return updatedShots;
     });
+  };
+
+  const undoLastShot = () => {
+    let undoneShot = null;
+    setRounds((prevRounds) => {
+      const updatedRounds = [...prevRounds];
+      const currentRoundIndex = updatedRounds.findIndex(
+        (round) => round.roundNumber === currentRound,
+      );
+      if (currentRoundIndex >= 0 && updatedRounds[currentRoundIndex].shots.length > 0) {
+        undoneShot = updatedRounds[currentRoundIndex].shots.pop();
+      }
+      return updatedRounds;
+    });
+
+    if (undoneShot) {
+      setShots((prevShots) => {
+        const updatedShots = { ...prevShots };
+        updatedShots[undoneShot.playerIndex] -= 1;
+        return updatedShots;
+      });
+    }
+
+    return undoneShot; // Return shot data for BoardState to restore
   };
 
   const handleEndRound = (scores) => {
@@ -132,30 +178,33 @@ const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <div>
-        {!metadata && <MetadataForm onSubmit={handleMetadataSubmit} />}
-        {metadata && (
-          <>
-            <BoardState
-              onSaveShot={handleSaveShot}
-              players={metadata.players}
-              roundNumber={currentRound}
-              shots={shots}
-              startingPlayer={startingPlayer}
-              setStartingPlayer={setStartingPlayer}
-              exportToJSON={exportToJSON}
-              resetShots={() => setShots({ 0: 0, 1: 0 })}
-              onEndRound={handleEndRound}
-              rounds={rounds} // Added rounds prop
-            />
-            <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
-              Export Filename: {getFilename()}
-            </Typography>
-            <button onClick={handleGameOver}>End Game</button>
-            <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
-          </>
-        )}
-      </div>
+      <ErrorBoundary>
+        <div>
+          {!metadata && <MetadataForm onSubmit={handleMetadataSubmit} />}
+          {metadata && (
+            <>
+              <BoardState
+                onSaveShot={handleSaveShot}
+                players={metadata.players}
+                roundNumber={currentRound}
+                shots={shots}
+                startingPlayer={startingPlayer}
+                setStartingPlayer={setStartingPlayer}
+                exportToJSON={exportToJSON}
+                resetShots={() => setShots({ 0: 0, 1: 0 })}
+                onEndRound={handleEndRound}
+                rounds={rounds}
+                undoLastShot={undoLastShot}
+              />
+              <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
+                Export Filename: {getFilename()}
+              </Typography>
+              <button onClick={handleGameOver}>End Game</button>
+              <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
+            </>
+          )}
+        </div>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 };
