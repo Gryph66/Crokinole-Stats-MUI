@@ -4,7 +4,7 @@
 
 <div align="center">
   <a href="docs/screenshots/shot_capture.png">
-    <img src="docs/screenshots/disc_tracking.png" alt="Disc Tracking" width="200" style="margin: 10px;">
+    <img src="docs/screenshots/shot_capture.png" alt="Disc Tracking" width="400" style="margin: 10px;">
   </a>
   <a href="docs/screenshots/metatdata_entryexample.png">
     <img src="docs/screenshots/metatdata_entryexample.png" alt="Metadata Entry Example" width="200" style="margin: 10px;">
