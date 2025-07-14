@@ -142,17 +142,24 @@ const BoardState = ({
             context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
             context.drawImage(loadedImage, 0, 0, 600, 500);
             
-            // Validate the image data
-            const samplePixel = context.getImageData(300, 250, 1, 1).data;
-            console.log("Center RGB at 300,250:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
-            
-            if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0) {
-              throw new Error("Invalid image data - all pixels black");
-            }
-            
-            console.log("RGB image loaded successfully");
-            setIsRgbLoaded(true);
-            resolve();
+            // Add a small delay to ensure the canvas is fully ready
+            setTimeout(() => {
+              try {
+                // Validate the image data
+                const samplePixel = context.getImageData(300, 250, 1, 1).data;
+                console.log("Center RGB at 300,250:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
+                
+                if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0) {
+                  throw new Error("Invalid image data - all pixels black");
+                }
+                
+                console.log("RGB image loaded and ready for pixel access");
+                setIsRgbLoaded(true);
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            }, 100); // 100ms delay to ensure canvas is ready
           } catch (error) {
             reject(error);
           }
