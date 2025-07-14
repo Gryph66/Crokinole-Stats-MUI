@@ -219,41 +219,63 @@ const BoardState = ({
 
   const getZoneInfo = (x, y) => {
     const rgbCanvas = rgbCanvasRef.current;
-    if (rgbCanvas && isRgbLoaded) { // Only proceed if loaded
-      const context = rgbCanvas.getContext("2d");
-      const scaleX = rgbCanvas.width / canvasRef.current.width; // Permanent scaling fix
+    if (!rgbCanvas || !isRgbLoaded) {
+      console.warn("RGB canvas not loaded or ready - check image load");
+      return { zone: "Unknown", points: 0 };
+    }
+
+    const context = rgbCanvas.getContext("2d");
+    if (!context) {
+      console.warn("Could not get RGB canvas context");
+      return { zone: "Unknown", points: 0 };
+    }
+
+    // Verify canvas has valid dimensions and data
+    if (rgbCanvas.width === 0 || rgbCanvas.height === 0) {
+      console.warn("RGB canvas has invalid dimensions");
+      return { zone: "Unknown", points: 0 };
+    }
+
+    try {
+      // Test if we can read pixel data by checking a center pixel first
+      const testPixel = context.getImageData(300, 250, 1, 1).data;
+      if (testPixel[0] === 0 && testPixel[1] === 0 && testPixel[2] === 0) {
+        console.warn("RGB canvas appears to have no valid image data");
+        return { zone: "Unknown", points: 0 };
+      }
+
+      const scaleX = rgbCanvas.width / canvasRef.current.width;
       const scaleY = rgbCanvas.height / canvasRef.current.height;
       const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), rgbCanvas.width - 1);
       const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), rgbCanvas.height - 1);
-      console.log("Clicked:", x, y, "Scaled:", scaledX, scaledY); // Debug coordinates
-      try {
-        const pixel = context.getImageData(scaledX, scaledY, 1, 1).data; // [r, g, b, a]
-        const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
-        console.log("RGB at", scaledX, scaledY, ":", rgbColor); // Debug RGB
-        let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
-        if (zoneInfo.description === "Unknown") {
-          // Tolerance check (±5 on each RGB channel)
-          for (let defRgb in zoneDefinitions) {
-            const [defR, defG, defB] = defRgb.split(",").map(Number);
-            if (
-              Math.abs(pixel[0] - defR) <= 5 &&
-              Math.abs(pixel[1] - defG) <= 5 &&
-              Math.abs(pixel[2] - defB) <= 5
-            ) {
-              zoneInfo = zoneDefinitions[defRgb];
-              console.log("Near match found:", defRgb);
-              break;
-            }
+      console.log("Clicked:", x, y, "Scaled:", scaledX, scaledY);
+      
+      const pixel = context.getImageData(scaledX, scaledY, 1, 1).data;
+      const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
+      console.log("RGB at", scaledX, scaledY, ":", rgbColor);
+      
+      let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
+      if (zoneInfo.description === "Unknown") {
+        // Tolerance check (±5 on each RGB channel)
+        for (let defRgb in zoneDefinitions) {
+          const [defR, defG, defB] = defRgb.split(",").map(Number);
+          if (
+            Math.abs(pixel[0] - defR) <= 5 &&
+            Math.abs(pixel[1] - defG) <= 5 &&
+            Math.abs(pixel[2] - defB) <= 5
+          ) {
+            zoneInfo = zoneDefinitions[defRgb];
+            console.log("Near match found:", defRgb);
+            break;
           }
         }
-        return { zone: zoneInfo.description, points: zoneInfo.points };
-      } catch (e) {
-        console.error("ImageData error:", e, "at", scaledX, scaledY);
-        return { zone: "Unknown", points: 0 };
       }
+      return { zone: zoneInfo.description, points: zoneInfo.points };
+    } catch (e) {
+      console.error("ImageData error:", e);
+      console.warn("RGB canvas not ready for pixel data access");
+      return { zone: "Unknown", points: 0 };
     }
-    console.warn("RGB canvas not loaded or ready - check image load");
-    return { zone: "Unknown", points: 0 };
   };
 
   const handleCanvasClick = (e) => {
