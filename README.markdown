@@ -1,6 +1,23 @@
 # Crokinole Game Tracker
 
-![Crokinole Game Tracker Logo](docs/screenshots/disc_tracking.png) <!-- Optional: Replace with your app's logo or banner -->
+## App Screenshots
+
+<div align="center">
+  <a href="docs/screenshots/disc_tracking.png">
+    <img src="docs/screenshots/disc_tracking.png" alt="Disc Tracking" width="200" style="margin: 10px;">
+  </a>
+  <a href="docs/screenshots/metadata_entry.png">
+    <img src="docs/screenshots/metadata_entry.png" alt="Metadata Entry" width="200" style="margin: 10px;">
+  </a>
+  <a href="docs/screenshots/metatdata_entryexample.png">
+    <img src="docs/screenshots/metatdata_entryexample.png" alt="Metadata Entry Example" width="200" style="margin: 10px;">
+  </a>
+  <a href="docs/screenshots/shooter_selection.png">
+    <img src="docs/screenshots/shooter_selection.png" alt="Shooter Selection" width="200" style="margin: 10px;">
+  </a>
+</div>
+
+---
 
 The **Crokinole Game Tracker** is a web-based application designed to streamline the process of recording and analyzing Crokinole matches. Built with React and Material-UI, this app allows users to input game metadata, track shots on a virtual Crokinole board, manage scores, and export game data as JSON files for further analysis. Whether you're a tournament organizer, player, or enthusiast, this tool provides an intuitive interface to capture detailed game statistics efficiently.
 
