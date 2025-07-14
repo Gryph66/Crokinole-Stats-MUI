@@ -129,15 +129,18 @@ const BoardState = ({
     }
 
     // Check if already properly loaded
-    if (rgbLoadedRef.current && rgbContextRef.current && rgbReady) {
+    if (rgbLoadedRef.current && rgbContextRef.current) {
+      console.log("RGB already loaded, skipping initialization");
       return;
     }
 
     // Mark as being initialized to prevent duplicate attempts
     if (rgbInitializedRef.current) {
+      console.log("RGB initialization already in progress");
       return;
     }
     rgbInitializedRef.current = true;
+    console.log("Starting RGB canvas initialization");
     
     const rgbCanvas = rgbCanvasRef.current;
     
@@ -199,7 +202,7 @@ const BoardState = ({
         setRgbReady(false);
       }
     };
-  }, [canvasMounted, rgbReady]);
+  }, [canvasMounted]);
 
   const drawBoard = () => {
     const canvas = canvasRef.current;
