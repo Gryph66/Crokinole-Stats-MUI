@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MetadataForm from "./MetadataForm";
 import BoardState from "./BoardState";
 import theme from './theme';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider, Typography } from '@mui/material';
 
 const App = () => {
   const [metadata, setMetadata] = useState(null);
@@ -100,6 +100,14 @@ const App = () => {
       return index === rounds.length - 1 ? round.shots.length > 0 : true;
     });
 
+    // Generate filename
+    const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
+    const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
+    const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
+    const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
+    const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
+    const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
+
     const blob = new Blob(
       [JSON.stringify({ metadata, rounds: filteredRounds }, null, 2)],
       { type: "application/json" },
@@ -107,9 +115,22 @@ const App = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "crokinole_game_data.json";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+
+    return filename; // For display purposes
+  };
+
+  // Generate filename for display (same logic as in exportToJSON)
+  const getFilename = () => {
+    if (!metadata) return "No metadata available";
+    const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
+    const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
+    const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
+    const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
+    const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
+    return `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
   };
 
   return (
@@ -129,6 +150,9 @@ const App = () => {
               resetShots={() => setShots({ 0: 0, 1: 0 })}
               onEndRound={handleEndRound}
             />
+            <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
+              Export Filename: {getFilename()}
+            </Typography>
             <button onClick={handleGameOver}>End Game</button>
             <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
           </>

@@ -2,33 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import ShooterSelection from "./ShooterSelection";
 import ScoreInput from "./ScoreInput";
 import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton } from "@mui/material";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-// Custom theme for a professional white design
-const theme = createTheme({
-  palette: {
-    primary: { main: '#4CAF50' }, // Green for actions
-    secondary: { main: '#FF0000' }, // Red for player accents
-    background: { default: '#ffffff', paper: '#ffffff' }, // Pure white background
-    text: { primary: '#333' }, // Dark text for readability
-    divider: '#e0e0e0', // Light divider for sections
-  },
-  typography: {
-    fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
-    h2: { fontSize: '1.2rem', fontWeight: 500 },
-    h3: { fontSize: '0.9rem', fontWeight: 400 },
-    subtitle1: { fontSize: '0.8rem' }, // Slightly larger for better readability
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8, // Rounded corners for a modern look
-        },
-      },
-    },
-  },
-});
 
 const BoardState = ({
   onSaveShot,
@@ -89,27 +62,27 @@ const BoardState = ({
       try {
         const img = new Image();
         img.crossOrigin = "anonymous";
-        
+
         const imageLoaded = new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
         });
-        
+
         img.src = "/crokinole_board_colored.png";
         await imageLoaded;
-        
+
         // Create temporary canvas to extract image data
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = 600;
         tempCanvas.height = 500;
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(img, 0, 0, 600, 500);
-        
+
         // Store the image data directly
         rgbDataRef.current = tempCtx.getImageData(0, 0, 600, 500);
         setRgbReady(true);
         console.log("RGB data loaded successfully");
-        
+
       } catch (error) {
         console.error("Failed to load RGB data:", error);
         setRgbReady(false);
@@ -138,8 +111,6 @@ const BoardState = ({
       setTwentyCounts({ 1: 0, 2: 0 }); // Reset 20s count per round
     }
   }, [roundNumber, startingPlayer]);
-
-  
 
   const drawBoard = () => {
     const canvas = canvasRef.current;
@@ -189,7 +160,7 @@ const BoardState = ({
       const scaleY = 500 / canvasRef.current.height;
       const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), 599);
       const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), 499);
-      
+
       // Get pixel from stored image data
       const imageData = rgbDataRef.current;
       const index = (scaledY * 600 + scaledX) * 4;
@@ -198,10 +169,10 @@ const BoardState = ({
         imageData.data[index + 1], // G
         imageData.data[index + 2]  // B
       ];
-      
+
       const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
       console.log("Zone detection - Click:", x, y, "RGB:", rgbColor);
-      
+
       let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
       if (zoneInfo.description === "Unknown") {
         // Tolerance check (±5 on each RGB channel)
@@ -361,7 +332,7 @@ const BoardState = ({
         exclusive
         onChange={handleShooterChange}
         aria-label="select active shooter"
-        style={{ margin: "10px 0", display: "flex", justifyContent: "center" }}
+        style={{ margin: "0 10px", display: "flex", justifyContent: "center" }}
       >
         <ToggleButton value={0} aria-label="Player 1" style={{ color: players[1]?.color || "#000" }}>
           {players[1]?.name || "Player 1"}
@@ -374,126 +345,124 @@ const BoardState = ({
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
-        <Typography variant="h2" align="center" gutterBottom>Round {roundNumber}</Typography>
-        {!firstShooterSet && (
-          <div style={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+    <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
+      <Typography variant="h2" align="center" gutterBottom>Round {roundNumber}</Typography>
+      {!firstShooterSet && (
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={() => handleSetFirstShooter(0)}
+          >
+            {players[1]?.name || "Player 1"} Shoots First
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={() => handleSetFirstShooter(1)}
+          >
+            {players[2]?.name || "Player 2"} Shoots First
+          </Button>
+        </div>
+      )}
+      {firstShooterSet && (
+        <>
+          <Typography variant="h3" align="center" style={{ color: players[currentPlayerIndex + 1]?.color || "#333", margin: "5px 0" }}>
+            {players[currentPlayerIndex + 1]?.name || "Player"} ||{" "}
+            {players[currentPlayerIndex + 1]?.side} side || Shot{" "}
+            {shots[currentPlayerIndex] + 1}
+          </Typography>
+          <Typography variant="subtitle1" align="center" style={{ margin: "5px 0" }}>
+            <span style={{ color: players[1].color }}>●</span> {discCounts[1]}
+            <span style={{ color: players[2].color, marginLeft: "5px" }}>●</span>{" "}
+            {discCounts[2]}
+          </Typography>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "10px 0", flexWrap: "wrap", gap: "8px" }}>
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               color="primary"
-              onClick={() => handleSetFirstShooter(0)}
+              onClick={handleUndoLastShot}
             >
-              {players[1]?.name || "Player 1"} Shoots First
+              Undo Last Shot
             </Button>
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              onClick={() => handleSetFirstShooter(1)}
-            >
-              {players[2]?.name || "Player 2"} Shoots First
-            </Button>
-          </div>
-        )}
-        {firstShooterSet && (
-          <>
-            <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0" }}>
-              <Button
-                variant="outlined"
-                size="small"
-                color="primary"
-                onClick={handleUndoLastShot}
-              >
-                Undo Last Shot
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                color="primary"
-                onClick={handleSaveShot}
-              >
-                Save Shot
-              </Button>
-            </div>
-            <Typography variant="h3" align="center" style={{ color: players[currentPlayerIndex + 1]?.color || "#333", margin: "5px 0" }}>
-              {players[currentPlayerIndex + 1]?.name || "Player"} ||{" "}
-              {players[currentPlayerIndex + 1]?.side} side || Shot{" "}
-              {shots[currentPlayerIndex] + 1}
-            </Typography>
-            <Typography variant="subtitle1" align="center" style={{ margin: "5px 0" }}>
-              <span style={{ color: players[1].color }}>●</span> {discCounts[1]}
-              <span style={{ color: players[2].color, marginLeft: "5px" }}>●</span>{" "}
-              {discCounts[2]}
-            </Typography>
             <CustomShooterSelection
               activeShooterIndex={activeShooterIndex}
               players={players}
               handleSetActiveShooter={handleSetActiveShooter}
             />
-            <canvas
-              ref={canvasRef}
-              width={600}
-              height={500}
-              onClick={handleCanvasClick}
-              style={{ border: "1px solid #ccc", display: "block", margin: "10px auto", backgroundColor: "#ffffff" }}
-            />
-            
-            {/* Enhanced stats table */}
-            <TableContainer component={Paper} style={{ margin: "10px 0", boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell style={{ backgroundColor: '#f5f5f5' }}></TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: theme.palette.text.primary }}>
-                      {players[1]?.name || "Player 1"}
-                    </TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: theme.palette.text.primary }}>
-                      {players[2]?.name || "Player 2"}
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell style={{ backgroundColor: '#fafafa' }}>20s</TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
-                      {twentyCounts[1]}
-                    </TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
-                      {twentyCounts[2]}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell style={{ backgroundColor: '#fafafa' }}>Shots</TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
-                      {shots[0]}
-                    </TableCell>
-                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
-                      {shots[1]}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {roundEnded && (
-              <Paper elevation={3} style={{ padding: "20px", margin: "10px 0", backgroundColor: '#ffffff', borderRadius: 8 }}>
-                <Typography variant="h3" align="center" gutterBottom>End of Round {roundNumber}</Typography>
-                <ScoreInput
-                  players={players}
-                  scores={scores}
-                  handleScoreChange={handleScoreChange}
-                  handleEndRoundSubmit={handleEndRoundSubmit}
-                  calculateTotalTwenties={calculateTotalTwenties}
-                  calculateTotalPoints={calculateTotalPoints}
-                  roundNumber={roundNumber}
-                />
-              </Paper>
-            )}
-          </>
-        )}
-      </Paper>
-    </ThemeProvider>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleSaveShot}
+            >
+              Save Shot
+            </Button>
+          </div>
+          <canvas
+            ref={canvasRef}
+            width={600}
+            height={500}
+            onClick={handleCanvasClick}
+            style={{ border: "1px solid #ccc", display: "block", margin: "10px auto", backgroundColor: "#ffffff" }}
+          />
+
+          {/* Enhanced stats table */}
+          <TableContainer component={Paper} style={{ margin: "10px 0", boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell style={{ backgroundColor: '#f5f5f5' }}></TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: '#333' }}>
+                    {players[1]?.name || "Player 1"}
+                  </TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: '#333' }}>
+                    {players[2]?.name || "Player 2"}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell style={{ backgroundColor: '#fafafa' }}>20s</TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                    {twentyCounts[1]}
+                  </TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                    {twentyCounts[2]}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell style={{ backgroundColor: '#fafafa' }}>Shots</TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                    {shots[0]}
+                  </TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                    {shots[1]}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {roundEnded && (
+            <Paper elevation={3} style={{ padding: "20px", margin: "10px 0", backgroundColor: '#ffffff', borderRadius: 8 }}>
+              <Typography variant="h3" align="center" gutterBottom>End of Round {roundNumber}</Typography>
+              <ScoreInput
+                players={players}
+                scores={scores}
+                handleScoreChange={handleScoreChange}
+                handleEndRoundSubmit={handleEndRoundSubmit}
+                calculateTotalTwenties={calculateTotalTwenties}
+                calculateTotalPoints={calculateTotalPoints}
+                roundNumber={roundNumber}
+              />
+            </Paper>
+          )}
+        </>
+      )}
+    </Paper>
   );
 };
 
