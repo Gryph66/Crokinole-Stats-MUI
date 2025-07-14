@@ -58,10 +58,9 @@ const BoardState = ({
   const [twentyCounts, setTwentyCounts] = useState({ 1: 0, 2: 0 }); // Running total of 20s
   const rgbCanvasRef = useRef(null); // Hidden canvas for RGB classification
   const [isRgbLoaded, setIsRgbLoaded] = useState(false); // Track RGB canvas load state
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Force reload on mount or restart
   const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
   const rgbLoadedRef = useRef(false); // Persistent reference to RGB loaded state
-  const imageLoadedRef = useRef(false); // Track if image has ever been loaded
+  const rgbImageRef = useRef(null); // Store the loaded image data
 
   // Zone definitions from shotclassify.py, with RGB as string keys
   const zoneDefinitions = {
@@ -121,7 +120,7 @@ const BoardState = ({
     }
   }, [roundNumber, startingPlayer]);
 
-  // Load RGB image with improved timing and error handling
+  // Load RGB image once when canvas is mounted
   useEffect(() => {
     if (!canvasMounted || !rgbCanvasRef.current) {
       console.log("Waiting for canvas mount or ref...");
@@ -129,73 +128,46 @@ const BoardState = ({
     }
 
     // Don't reload if already loaded successfully
-    if (imageLoadedRef.current && rgbLoadedRef.current) {
+    if (rgbLoadedRef.current && rgbImageRef.current) {
       console.log("RGB image already loaded, skipping reload");
       return;
     }
 
     const rgbCanvas = rgbCanvasRef.current;
-    console.log("Attempting to load RGB image, trigger:", refreshTrigger);
+    console.log("Loading RGB image for zone detection...");
 
-    const loadImage = () => {
-      return new Promise((resolve, reject) => {
-        const loadedImage = new Image();
-        loadedImage.crossOrigin = "anonymous";
+    const loadedImage = new Image();
+    loadedImage.crossOrigin = "anonymous";
+    
+    loadedImage.onload = () => {
+      try {
+        rgbCanvas.width = 600;
+        rgbCanvas.height = 500;
+        const context = rgbCanvas.getContext("2d");
+        context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
+        context.drawImage(loadedImage, 0, 0, 600, 500);
         
-        loadedImage.onload = () => {
-          try {
-            rgbCanvas.width = 600;
-            rgbCanvas.height = 500;
-            const context = rgbCanvas.getContext("2d");
-            context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
-            context.drawImage(loadedImage, 0, 0, 600, 500);
-            
-            // Add a small delay to ensure the canvas is fully ready
-            setTimeout(() => {
-              try {
-                // Validate the image data
-                const samplePixel = context.getImageData(300, 250, 1, 1).data;
-                console.log("Center RGB at 300,250:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
-                
-                if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0) {
-                  throw new Error("Invalid image data - all pixels black");
-                }
-                
-                console.log("RGB image loaded and ready for pixel access");
-                setIsRgbLoaded(true);
-                rgbLoadedRef.current = true; // Set persistent reference
-                imageLoadedRef.current = true; // Mark as successfully loaded
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            }, 100); // 100ms delay to ensure canvas is ready
-          } catch (error) {
-            reject(error);
-          }
-        };
+        // Store the image reference
+        rgbImageRef.current = loadedImage;
         
-        loadedImage.onerror = () => {
-          reject(new Error("Image failed to load"));
-        };
+        // Validate the image data
+        const samplePixel = context.getImageData(300, 250, 1, 1).data;
+        console.log("RGB validation - Center pixel:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
         
-        // Start loading
-        loadedImage.src = "/crokinole_board_colored.png";
-      });
-    };
-
-    loadImage().catch((error) => {
-      console.error("Image load error (trigger", refreshTrigger, "):", error.message);
-      if (refreshTrigger < 5) { // Increase retry attempts
-        setTimeout(() => {
-          setRefreshTrigger(refreshTrigger + 1);
-          console.log("Retrying image load, trigger:", refreshTrigger + 1);
-        }, 500); // Add delay before retry
-      } else {
-        console.error("Max retries reached - image load failed permanently");
+        console.log("RGB canvas ready for zone detection");
+        setIsRgbLoaded(true);
+        rgbLoadedRef.current = true;
+      } catch (error) {
+        console.error("RGB canvas setup error:", error);
       }
-    });
-  }, [canvasMounted, refreshTrigger]); // Simplified dependency array
+    };
+    
+    loadedImage.onerror = () => {
+      console.error("Failed to load RGB image");
+    };
+    
+    loadedImage.src = "/crokinole_board_colored.png";
+  }, [canvasMounted]);
 
   const drawBoard = () => {
     const canvas = canvasRef.current;
@@ -235,41 +207,24 @@ const BoardState = ({
   };
 
   const getZoneInfo = (x, y) => {
+    // Check if RGB canvas and image are ready
+    if (!rgbLoadedRef.current || !rgbImageRef.current || !rgbCanvasRef.current) {
+      console.warn("RGB canvas not ready - image:", !!rgbImageRef.current, "canvas:", !!rgbCanvasRef.current, "loaded:", rgbLoadedRef.current);
+      return { zone: "Unknown", points: 0 };
+    }
+
     const rgbCanvas = rgbCanvasRef.current;
-    if (!rgbCanvas || !rgbLoadedRef.current) {
-      console.warn("RGB canvas not loaded or ready - check image load");
-      return { zone: "Unknown", points: 0 };
-    }
-
     const context = rgbCanvas.getContext("2d");
-    if (!context) {
-      console.warn("Could not get RGB canvas context");
-      return { zone: "Unknown", points: 0 };
-    }
-
-    // Verify canvas has valid dimensions and data
-    if (rgbCanvas.width === 0 || rgbCanvas.height === 0) {
-      console.warn("RGB canvas has invalid dimensions");
-      return { zone: "Unknown", points: 0 };
-    }
-
+    
     try {
-      // Test if we can read pixel data by checking a center pixel first
-      const testPixel = context.getImageData(300, 250, 1, 1).data;
-      if (testPixel[0] === 0 && testPixel[1] === 0 && testPixel[2] === 0) {
-        console.warn("RGB canvas appears to have no valid image data");
-        return { zone: "Unknown", points: 0 };
-      }
-
       const scaleX = rgbCanvas.width / canvasRef.current.width;
       const scaleY = rgbCanvas.height / canvasRef.current.height;
       const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), rgbCanvas.width - 1);
       const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), rgbCanvas.height - 1);
-      console.log("Clicked:", x, y, "Scaled:", scaledX, scaledY);
       
       const pixel = context.getImageData(scaledX, scaledY, 1, 1).data;
       const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
-      console.log("RGB at", scaledX, scaledY, ":", rgbColor);
+      console.log("Zone detection - Click:", x, y, "RGB:", rgbColor);
       
       let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
       if (zoneInfo.description === "Unknown") {
@@ -282,15 +237,14 @@ const BoardState = ({
             Math.abs(pixel[2] - defB) <= 5
           ) {
             zoneInfo = zoneDefinitions[defRgb];
-            console.log("Near match found:", defRgb);
+            console.log("Matched zone with tolerance:", defRgb, "->", zoneInfo.description);
             break;
           }
         }
       }
       return { zone: zoneInfo.description, points: zoneInfo.points };
     } catch (e) {
-      console.error("ImageData error:", e);
-      console.warn("RGB canvas not ready for pixel data access");
+      console.error("Zone detection error:", e);
       return { zone: "Unknown", points: 0 };
     }
   };
