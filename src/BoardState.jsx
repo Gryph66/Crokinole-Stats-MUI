@@ -13,10 +13,11 @@ const BoardState = ({
   startingPlayer,
   setStartingPlayer,
   onEndRound,
+  rounds,
 }) => {
   const canvasRef = useRef(null);
-  const [boardState, setBoardState] = useState([]); // Current shot's discs
-  const [previousBoardState, setPreviousBoardState] = useState([]); // Faint discs from last shot
+  const [boardState, setBoardState] = useState([]);
+  const [previousBoardState, setPreviousBoardState] = useState([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(startingPlayer);
   const [activeShooterIndex, setActiveShooterIndex] = useState(startingPlayer);
   const [shotType, setShotType] = useState("");
@@ -28,12 +29,13 @@ const BoardState = ({
   const [roundEnded, setRoundEnded] = useState(false);
   const [shotCount, setShotCount] = useState(1);
   const [discCounts, setDiscCounts] = useState({ 1: 0, 2: 0 });
-  const [twentyCounts, setTwentyCounts] = useState({ 1: 0, 2: 0 }); // Running total of 20s
-  const rgbCanvasRef = useRef(null); // Hidden canvas for RGB classification
-  const rgbDataRef = useRef(null); // Store RGB image data directly
-  const [rgbReady, setRgbReady] = useState(false); // React state for RGB readiness
+  const [twentyCounts, setTwentyCounts] = useState({ 1: 0, 2: 0 });
+  const rgbCanvasRef = useRef(null);
+  const rgbDataRef = useRef(null);
+  const [rgbReady, setRgbReady] = useState(false);
+  const [player1Points, setPlayer1Points] = useState(0);
+  const [player2Points, setPlayer2Points] = useState(0);
 
-  // Zone definitions from shotclassify.py, with RGB as string keys
   const zoneDefinitions = {
     "255,82,0": { points: 0, description: "Gutter" },
     "0,136,255": { points: 5, description: "Outer Ring" },
@@ -52,10 +54,25 @@ const BoardState = ({
     "0,191,255": { points: 20, description: "Take Out 20" },
   };
 
-  // Initialize RGB data directly without canvas dependency
+  // Calculate running point totals
+  useEffect(() => {
+    const calculateTotals = () => {
+      const totals = rounds.reduce(
+        (acc, round) => ({
+          player1: acc.player1 + (round.scores[1]?.points || 0),
+          player2: acc.player2 + (round.scores[2]?.points || 0),
+        }),
+        { player1: 0, player2: 0 }
+      );
+      setPlayer1Points(totals.player1);
+      setPlayer2Points(totals.player2);
+    };
+    calculateTotals();
+  }, [rounds]);
+
   useEffect(() => {
     if (rgbDataRef.current) {
-      return; // Already loaded
+      return;
     }
 
     const loadRGBData = async () => {
@@ -71,18 +88,15 @@ const BoardState = ({
         img.src = "/crokinole_board_colored.png";
         await imageLoaded;
 
-        // Create temporary canvas to extract image data
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = 600;
         tempCanvas.height = 500;
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(img, 0, 0, 600, 500);
 
-        // Store the image data directly
         rgbDataRef.current = tempCtx.getImageData(0, 0, 600, 500);
         setRgbReady(true);
         console.log("RGB data loaded successfully");
-
       } catch (error) {
         console.error("Failed to load RGB data:", error);
         setRgbReady(false);
@@ -108,7 +122,7 @@ const BoardState = ({
     if (startingPlayer !== null) {
       setCurrentPlayerIndex(startingPlayer);
       setActiveShooterIndex(startingPlayer);
-      setTwentyCounts({ 1: 0, 2: 0 }); // Reset 20s count per round
+      setTwentyCounts({ 1: 0, 2: 0 });
     }
   }, [roundNumber, startingPlayer]);
 
@@ -122,7 +136,6 @@ const BoardState = ({
         boardImage.onload = () => {
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.drawImage(boardImage, 0, 0, canvas.width, canvas.height);
-          // Draw faint previous discs
           context.globalAlpha = 0.3;
           previousBoardState.forEach((disc) => {
             context.beginPath();
@@ -131,7 +144,6 @@ const BoardState = ({
             context.fill();
           });
           context.globalAlpha = 1.0;
-          // Draw current discs
           drawDiscs(context);
         };
       }
@@ -161,13 +173,12 @@ const BoardState = ({
       const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), 599);
       const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), 499);
 
-      // Get pixel from stored image data
       const imageData = rgbDataRef.current;
       const index = (scaledY * 600 + scaledX) * 4;
       const pixel = [
-        imageData.data[index],     // R
-        imageData.data[index + 1], // G
-        imageData.data[index + 2]  // B
+        imageData.data[index],
+        imageData.data[index + 1],
+        imageData.data[index + 2]
       ];
 
       const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
@@ -175,7 +186,6 @@ const BoardState = ({
 
       let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
       if (zoneInfo.description === "Unknown") {
-        // Tolerance check (±5 on each RGB channel)
         for (let defRgb in zoneDefinitions) {
           const [defR, defG, defB] = defRgb.split(",").map(Number);
           if (
@@ -218,7 +228,6 @@ const BoardState = ({
           ...prevCounts,
           [activeShooterIndex + 1]: prevCounts[activeShooterIndex + 1] + 1,
         }));
-        // Update 20s count if zone contains "20"
         if (zoneInfo.zone.includes("20")) {
           setTwentyCounts((prev) => ({
             ...prev,
@@ -274,7 +283,6 @@ const BoardState = ({
       ...prevCounts,
       [activeShooterIndex + 1]: prevCounts[activeShooterIndex + 1] - 1,
     }));
-    // Adjust 20s count if undoing a 20
     const lastDisc = boardState[boardState.length - 1];
     if (lastDisc?.zone?.includes("20")) {
       setTwentyCounts((prev) => ({
@@ -304,7 +312,8 @@ const BoardState = ({
       1: { name: players[1]?.name || "", twenties: 0, points: 0 },
       2: { name: players[2]?.name || "", twenties: 0, points: 0 },
     });
-    setTwentyCounts({ 1: 0, 2: 0 }); // Reset 20s count after round
+    setTwentyCounts({ 1: 0, 2: 0 });
+    setPreviousBoardState([]);
   };
 
   const calculateTotalTwenties = () => {
@@ -315,7 +324,6 @@ const BoardState = ({
     return scores[1].points + scores[2].points;
   };
 
-  // Custom ShooterSelection component with MUI
   const CustomShooterSelection = ({ activeShooterIndex, players, handleSetActiveShooter }) => {
     const [selectedIndex, setSelectedIndex] = useState(activeShooterIndex);
 
@@ -409,8 +417,6 @@ const BoardState = ({
             onClick={handleCanvasClick}
             style={{ border: "1px solid #ccc", display: "block", margin: "10px auto", backgroundColor: "#ffffff" }}
           />
-
-          {/* Enhanced stats table */}
           <TableContainer component={Paper} style={{ margin: "10px 0", boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <Table size="small">
               <TableHead>
@@ -441,6 +447,15 @@ const BoardState = ({
                   </TableCell>
                   <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
                     {shots[1]}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell style={{ backgroundColor: '#fafafa' }}>Match Score</TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                    {player1Points}
+                  </TableCell>
+                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                    {player2Points}
                   </TableCell>
                 </TableRow>
               </TableBody>

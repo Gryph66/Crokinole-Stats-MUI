@@ -95,12 +95,10 @@ const App = () => {
   };
 
   const exportToJSON = () => {
-    // Filter out the last round if it's empty
     const filteredRounds = rounds.filter((round, index) => {
       return index === rounds.length - 1 ? round.shots.length > 0 : true;
     });
 
-    // Generate filename
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
     const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
     const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
@@ -119,10 +117,9 @@ const App = () => {
     a.click();
     URL.revokeObjectURL(url);
 
-    return filename; // For display purposes
+    return filename;
   };
 
-  // Generate filename for display (same logic as in exportToJSON)
   const getFilename = () => {
     if (!metadata) return "No metadata available";
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
@@ -149,6 +146,7 @@ const App = () => {
               exportToJSON={exportToJSON}
               resetShots={() => setShots({ 0: 0, 1: 0 })}
               onEndRound={handleEndRound}
+              rounds={rounds} // Added rounds prop
             />
             <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
               Export Filename: {getFilename()}
