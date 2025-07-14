@@ -59,6 +59,7 @@ const BoardState = ({
   const rgbCanvasRef = useRef(null); // Hidden canvas for RGB classification
   const rgbLoadedRef = useRef(false); // Persistent reference to RGB loaded state
   const rgbContextRef = useRef(null); // Store the canvas context
+  const rgbInitializedRef = useRef(false); // Prevent multiple initialization attempts
   const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
 
   // Zone definitions from shotclassify.py, with RGB as string keys
@@ -121,18 +122,24 @@ const BoardState = ({
 
   // Load RGB image once when canvas is mounted
   useEffect(() => {
-    if (!canvasMounted || !rgbCanvasRef.current || rgbLoadedRef.current) {
+    if (!canvasMounted || !rgbCanvasRef.current || rgbLoadedRef.current || rgbInitializedRef.current) {
       return;
     }
 
+    // Mark as being initialized to prevent duplicate attempts
+    rgbInitializedRef.current = true;
+    
     const rgbCanvas = rgbCanvasRef.current;
+    
+    // Set canvas dimensions first
+    rgbCanvas.width = 600;
+    rgbCanvas.height = 500;
+    
     const loadedImage = new Image();
     loadedImage.crossOrigin = "anonymous";
     
     loadedImage.onload = () => {
       try {
-        rgbCanvas.width = 600;
-        rgbCanvas.height = 500;
         const context = rgbCanvas.getContext("2d");
         context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
         context.drawImage(loadedImage, 0, 0, 600, 500);
@@ -144,7 +151,14 @@ const BoardState = ({
         console.log("RGB canvas loaded and ready");
       } catch (error) {
         console.error("RGB canvas setup error:", error);
+        // Reset initialization flag on error so it can be retried
+        rgbInitializedRef.current = false;
       }
+    };
+    
+    loadedImage.onerror = () => {
+      console.error("Failed to load RGB image");
+      rgbInitializedRef.current = false;
     };
     
     loadedImage.src = "/crokinole_board_colored.png";
@@ -188,7 +202,7 @@ const BoardState = ({
   };
 
   const getZoneInfo = (x, y) => {
-    if (!rgbLoadedRef.current || !rgbContextRef.current) {
+    if (!rgbLoadedRef.current || !rgbContextRef.current || !rgbCanvasRef.current) {
       console.warn("RGB canvas not ready");
       return { zone: "Unknown", points: 0 };
     }
