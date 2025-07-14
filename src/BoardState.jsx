@@ -1,16 +1,32 @@
 import React, { useState, useEffect, useRef } from "react";
 import ShooterSelection from "./ShooterSelection";
 import ScoreInput from "./ScoreInput";
-import { Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from "@mui/material";
+import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Custom theme for modern, smaller fonts
+// Custom theme for a professional white design
 const theme = createTheme({
+  palette: {
+    primary: { main: '#4CAF50' }, // Green for actions
+    secondary: { main: '#FF0000' }, // Red for player accents
+    background: { default: '#ffffff', paper: '#ffffff' }, // Pure white background
+    text: { primary: '#333' }, // Dark text for readability
+    divider: '#e0e0e0', // Light divider for sections
+  },
   typography: {
     fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif',
     h2: { fontSize: '1.2rem', fontWeight: 500 },
     h3: { fontSize: '0.9rem', fontWeight: 400 },
-    subtitle1: { fontSize: '0.7rem' },
+    subtitle1: { fontSize: '0.8rem' }, // Slightly larger for better readability
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8, // Rounded corners for a modern look
+        },
+      },
+    },
   },
 });
 
@@ -42,6 +58,8 @@ const BoardState = ({
   const [twentyCounts, setTwentyCounts] = useState({ 1: 0, 2: 0 }); // Running total of 20s
   const rgbCanvasRef = useRef(null); // Hidden canvas for RGB classification
   const [isRgbLoaded, setIsRgbLoaded] = useState(false); // Track RGB canvas load state
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Force reload on mount or restart
+  const [canvasMounted, setCanvasMounted] = useState(false); // Track canvas mount
 
   // Zone definitions from shotclassify.py, with RGB as string keys
   const zoneDefinitions = {
@@ -61,6 +79,14 @@ const BoardState = ({
     "217,171,196": { points: 20, description: "Other Shot" },
     "0,191,255": { points: 20, description: "Take Out 20" },
   };
+
+  // Set canvasMounted when refs are available
+  useEffect(() => {
+    if (canvasRef.current && rgbCanvasRef.current) {
+      setCanvasMounted(true);
+      console.log("Canvases mounted:", canvasRef.current, rgbCanvasRef.current);
+    }
+  }, [canvasRef, rgbCanvasRef]);
 
   useEffect(() => {
     if (canvasRef.current && firstShooterSet) {
@@ -82,26 +108,56 @@ const BoardState = ({
     }
   }, [roundNumber, startingPlayer]);
 
-  // Load RGB mask into hidden canvas once
+  // Load RGB image only after canvases are mounted
   useEffect(() => {
+    if (!canvasMounted) return; // Wait for canvases to mount
     const rgbCanvas = rgbCanvasRef.current;
-    if (rgbCanvas) {
-      const rgbImage = new Image();
-      rgbImage.crossOrigin = "anonymous"; // Handle potential CORS issues
-      rgbImage.src = "/crokinole_board_colored.png";
-      rgbImage.onload = () => {
-        rgbCanvas.width = rgbImage.width; // Use natural 600x500
-        rgbCanvas.height = rgbImage.height;
+    if (!rgbCanvas) {
+      console.error("rgbCanvasRef is not initialized after mount check");
+      return;
+    }
+    console.log("Attempting to load RGB image, trigger:", refreshTrigger); // Debug initial state
+
+    const loadImage = async () => {
+      try {
+        const loadedImage = new Image();
+        loadedImage.crossOrigin = "anonymous"; // Handle CORS issues
+        const loadPromise = new Promise((resolve, reject) => {
+          loadedImage.onload = () => resolve(loadedImage);
+          loadedImage.onerror = () => reject(new Error("Image load failed"));
+          loadedImage.src = "/crokinole_board_colored.png"; // Trigger load
+        });
+
+        const rgbImage = await loadPromise;
+        rgbCanvas.width = 600; // Explicitly set to match visible canvas
+        rgbCanvas.height = 500;
         const context = rgbCanvas.getContext("2d");
-        context.drawImage(rgbImage, 0, 0); // Draw at natural size
-        console.log("RGB canvas loaded:", rgbCanvas.width, "x", rgbCanvas.height); // Debug
+        context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height); // Ensure clean slate
+        context.drawImage(rgbImage, 0, 0, 600, 500); // Draw with explicit dimensions
+        console.log("RGB image loaded (trigger", refreshTrigger, "):", rgbImage.width, "x", rgbImage.height); // Debug
         const samplePixel = context.getImageData(0, 0, 1, 1).data;
         console.log("Sample RGB at 0,0:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
-        setIsRgbLoaded(true); // Mark as loaded
-      };
-      rgbImage.onerror = () => console.error("Failed to load RGB mask image - check path /crokinole_board_colored.png in public/");
-    }
-  }, []);
+        const centerPixel = context.getImageData(300, 250, 1, 1).data;
+        console.log("Center RGB at 300,250:", `${centerPixel[0]},${centerPixel[1]},${centerPixel[2]}`);
+        if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0 &&
+            centerPixel[0] === 0 && centerPixel[1] === 0 && centerPixel[2] === 0) {
+          console.warn("All sample pixels are black - image load failed");
+          throw new Error("Invalid image data");
+        }
+        setIsRgbLoaded(true); // Mark as loaded only if valid data
+      } catch (error) {
+        console.error("Image load error (trigger", refreshTrigger, "):", error.message);
+        if (refreshTrigger < 3) { // Retry up to 3 times
+          setRefreshTrigger(refreshTrigger + 1);
+          console.log("Forcing reload, trigger:", refreshTrigger + 1);
+        } else {
+          console.error("Max retries reached - image load failed permanently");
+        }
+      }
+    };
+
+    loadImage();
+  }, [refreshTrigger, canvasMounted]); // Trigger reload on refreshTrigger or canvasMounted change
 
   const drawBoard = () => {
     const canvas = canvasRef.current;
@@ -144,8 +200,10 @@ const BoardState = ({
     const rgbCanvas = rgbCanvasRef.current;
     if (rgbCanvas && isRgbLoaded) { // Only proceed if loaded
       const context = rgbCanvas.getContext("2d");
-      const scaledX = Math.min(Math.max(Math.round(x), 0), rgbCanvas.width - 1);
-      const scaledY = Math.min(Math.max(Math.round(y), 0), rgbCanvas.height - 1);
+      const scaleX = rgbCanvas.width / canvasRef.current.width; // Permanent scaling fix
+      const scaleY = rgbCanvas.height / canvasRef.current.height;
+      const scaledX = Math.min(Math.max(Math.round(x * scaleX), 0), rgbCanvas.width - 1);
+      const scaledY = Math.min(Math.max(Math.round(y * scaleY), 0), rgbCanvas.height - 1);
       console.log("Clicked:", x, y, "Scaled:", scaledX, scaledY); // Debug coordinates
       try {
         const pixel = context.getImageData(scaledX, scaledY, 1, 1).data; // [r, g, b, a]
@@ -173,7 +231,7 @@ const BoardState = ({
         return { zone: "Unknown", points: 0 };
       }
     }
-    console.warn("RGB canvas not loaded or ready");
+    console.warn("RGB canvas not loaded or ready - check image load");
     return { zone: "Unknown", points: 0 };
   };
 
@@ -296,15 +354,45 @@ const BoardState = ({
     return scores[1].points + scores[2].points;
   };
 
+  // Custom ShooterSelection component with MUI
+  const CustomShooterSelection = ({ activeShooterIndex, players, handleSetActiveShooter }) => {
+    const [selectedIndex, setSelectedIndex] = useState(activeShooterIndex);
+
+    const handleShooterChange = (event, newIndex) => {
+      if (newIndex !== null) {
+        setSelectedIndex(newIndex);
+        handleSetActiveShooter(newIndex);
+      }
+    };
+
+    return (
+      <ToggleButtonGroup
+        value={selectedIndex}
+        exclusive
+        onChange={handleShooterChange}
+        aria-label="select active shooter"
+        style={{ margin: "10px 0", display: "flex", justifyContent: "center" }}
+      >
+        <ToggleButton value={0} aria-label="Player 1" style={{ color: players[1]?.color || "#000" }}>
+          {players[1]?.name || "Player 1"}
+        </ToggleButton>
+        <ToggleButton value={1} aria-label="Player 2" style={{ color: players[2]?.color || "#f00" }}>
+          {players[2]?.name || "Player 2"}
+        </ToggleButton>
+      </ToggleButtonGroup>
+    );
+  };
+
   return (
     <ThemeProvider theme={theme}>
-      <div style={{ width: "600px", margin: "0 auto", padding: "10px" }}>
-        <h2>Round {roundNumber}</h2>
+      <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
+        <Typography variant="h2" align="center" gutterBottom>Round {roundNumber}</Typography>
         {!firstShooterSet && (
-          <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "10px" }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
             <Button
               variant="contained"
               size="small"
+              color="primary"
               onClick={() => handleSetFirstShooter(0)}
             >
               {players[1]?.name || "Player 1"} Shoots First
@@ -312,6 +400,7 @@ const BoardState = ({
             <Button
               variant="contained"
               size="small"
+              color="primary"
               onClick={() => handleSetFirstShooter(1)}
             >
               {players[2]?.name || "Player 2"} Shoots First
@@ -320,10 +409,11 @@ const BoardState = ({
         )}
         {firstShooterSet && (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0" }}>
               <Button
                 variant="outlined"
                 size="small"
+                color="primary"
                 onClick={handleUndoLastShot}
               >
                 Undo Last Shot
@@ -331,27 +421,23 @@ const BoardState = ({
               <Button
                 variant="contained"
                 size="small"
-                color="success"
+                color="primary"
                 onClick={handleSaveShot}
               >
                 Save Shot
               </Button>
             </div>
-            <h3
-              style={{ color: players[currentPlayerIndex + 1]?.color || "black", textAlign: "center", marginBottom: "5px" }}
-            >
+            <Typography variant="h3" align="center" style={{ color: players[currentPlayerIndex + 1]?.color || "#333", margin: "5px 0" }}>
               {players[currentPlayerIndex + 1]?.name || "Player"} ||{" "}
               {players[currentPlayerIndex + 1]?.side} side || Shot{" "}
               {shots[currentPlayerIndex] + 1}
-            </h3>
-            <p style={{ textAlign: "center", marginBottom: "5px", fontSize: "0.7rem" }}>
+            </Typography>
+            <Typography variant="subtitle1" align="center" style={{ margin: "5px 0" }}>
               <span style={{ color: players[1].color }}>●</span> {discCounts[1]}
-              <span style={{ color: players[2].color, marginLeft: "5px" }}>
-                ●
-              </span>{" "}
+              <span style={{ color: players[2].color, marginLeft: "5px" }}>●</span>{" "}
               {discCounts[2]}
-            </p>
-            <ShooterSelection
+            </Typography>
+            <CustomShooterSelection
               activeShooterIndex={activeShooterIndex}
               players={players}
               handleSetActiveShooter={handleSetActiveShooter}
@@ -361,40 +447,40 @@ const BoardState = ({
               width={600}
               height={500}
               onClick={handleCanvasClick}
-              style={{ border: "1px solid #ccc", display: "block", margin: "0 auto", backgroundColor: "#ffffff" }} // White background
+              style={{ border: "1px solid #ccc", display: "block", margin: "10px auto", backgroundColor: "#ffffff" }}
             />
             {/* Hidden canvas for RGB classification */}
             <canvas ref={rgbCanvasRef} style={{ display: "none" }} />
-            {/* Table display of stats */}
-            <TableContainer component={Paper} style={{ marginTop: "10px", backgroundColor: "#fff" }}>
+            {/* Enhanced stats table */}
+            <TableContainer component={Paper} style={{ margin: "10px 0", boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell align="center" style={{ fontWeight: "bold", color: "#333" }}>
+                    <TableCell style={{ backgroundColor: '#f5f5f5' }}></TableCell>
+                    <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: theme.palette.text.primary }}>
                       {players[1]?.name || "Player 1"}
                     </TableCell>
-                    <TableCell align="center" style={{ fontWeight: "bold", color: "#333" }}>
+                    <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: theme.palette.text.primary }}>
                       {players[2]?.name || "Player 2"}
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>20s</TableCell>
-                    <TableCell align="center" style={{ color: players[1].color }}>
+                    <TableCell style={{ backgroundColor: '#fafafa' }}>20s</TableCell>
+                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
                       {twentyCounts[1]}
                     </TableCell>
-                    <TableCell align="center" style={{ color: players[2].color }}>
+                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
                       {twentyCounts[2]}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Shots</TableCell>
-                    <TableCell align="center" style={{ color: players[1].color }}>
+                    <TableCell style={{ backgroundColor: '#fafafa' }}>Shots</TableCell>
+                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
                       {shots[0]}
                     </TableCell>
-                    <TableCell align="center" style={{ color: players[2].color }}>
+                    <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
                       {shots[1]}
                     </TableCell>
                   </TableRow>
@@ -402,8 +488,8 @@ const BoardState = ({
               </Table>
             </TableContainer>
             {roundEnded && (
-              <div>
-                <h3>End of Round {roundNumber}</h3>
+              <Paper elevation={3} style={{ padding: "20px", margin: "10px 0", backgroundColor: '#ffffff', borderRadius: 8 }}>
+                <Typography variant="h3" align="center" gutterBottom>End of Round {roundNumber}</Typography>
                 <ScoreInput
                   players={players}
                   scores={scores}
@@ -413,11 +499,11 @@ const BoardState = ({
                   calculateTotalPoints={calculateTotalPoints}
                   roundNumber={roundNumber}
                 />
-              </div>
+              </Paper>
             )}
           </>
         )}
-      </div>
+      </Paper>
     </ThemeProvider>
   );
 };
