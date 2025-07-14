@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { TextField, Button, MenuItem, FormControl, InputLabel, Select, Grid, Typography, Paper, InputAdornment, Box } from '@mui/material';
+import { TextField, Button, MenuItem, FormControl, InputLabel, Select, Grid, Typography, Paper } from '@mui/material';
 
 const MetadataForm = ({ onSubmit }) => {
   const [metadata, setMetadata] = useState({
     matchId: "",
     date: "",
-    tournamentName: "",
     tournamentRound: "",
     youtubeLink: "",
     players: [
@@ -35,20 +34,30 @@ const MetadataForm = ({ onSubmit }) => {
     }));
   };
 
+  const getTournamentName = () => {
+    const year = metadata.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
+    const matchId = metadata.matchId || 'UnknownMatch';
+    return `${matchId} ${year}`;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const formattedPlayers = {
       1: metadata.players[0],
       2: metadata.players[1],
     };
-    onSubmit({ ...metadata, players: formattedPlayers });
+    onSubmit({
+      ...metadata,
+      players: formattedPlayers,
+      tournamentName: getTournamentName(), // Use tournamentName for historical JSON compatibility
+    });
   };
 
   return (
-    <Paper elevation={3} style={{ padding: "30px", maxWidth: "600px", margin: "30px auto" }}>
-      <Typography variant="h5" gutterBottom align="center">Enter Game Metadata</Typography>
+    <Paper elevation={3} style={{ padding: "20px", maxWidth: "500px", margin: "20px auto" }}>
+      <Typography variant="h6" align="center" sx={{ marginBottom: '8px' }}>Enter Game Metadata</Typography>
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
+        <Grid container spacing={1}>
           <Grid item xs={12}>
             <TextField
               label="Match ID"
@@ -58,6 +67,7 @@ const MetadataForm = ({ onSubmit }) => {
               variant="outlined"
               fullWidth
               required
+              sx={{ marginY: '4px' }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -70,17 +80,8 @@ const MetadataForm = ({ onSubmit }) => {
               variant="outlined"
               fullWidth
               required
-              InputLabelProps={{ shrink: true, style: { fontSize: '1rem' } }} // Increased font size
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              label="Tournament Name"
-              name="tournamentName"
-              value={metadata.tournamentName}
-              onChange={handleInputChange}
-              variant="outlined"
-              fullWidth
+              sx={{ marginY: '4px' }}
+              InputLabelProps={{ shrink: true, style: { fontSize: '0.9rem' } }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -91,7 +92,13 @@ const MetadataForm = ({ onSubmit }) => {
               onChange={handleInputChange}
               variant="outlined"
               fullWidth
+              sx={{ marginY: '4px' }}
             />
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="caption" align="center" sx={{ marginY: '4px', color: '#333', display: 'block' }}>
+              Tournament Name: {getTournamentName()}
+            </Typography>
           </Grid>
           <Grid item xs={12}>
             <TextField
@@ -102,42 +109,40 @@ const MetadataForm = ({ onSubmit }) => {
               variant="outlined"
               fullWidth
               required
+              sx={{ marginY: '4px' }}
             />
           </Grid>
           {metadata.players.map((player, index) => (
             <Grid item xs={12} key={index}>
-              <Typography variant="h6" gutterBottom>Player {index + 1}</Typography>
-              <TextField
-                label="Name"
-                name="name"
-                value={player.name}
-                onChange={(e) => handlePlayerChange(index, e)}
-                variant="outlined"
-                fullWidth
-                required
-              />
-              <FormControl fullWidth style={{ marginTop: "16px" }}>
-                <TextField
-                  label="Color"
-                  variant="outlined"
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box style={{ width: '20px', height: '20px', backgroundColor: player.color, border: '1px solid #ccc', borderRadius: '4px' }} />
-                      </InputAdornment>
-                    ),
-                    type: "color",
-                    style: { paddingLeft: '0' }, // Integrate swatch
-                  }}
-                  name="color"
-                  value={player.color}
-                  onChange={(e) => handlePlayerChange(index, e)}
-                  InputLabelProps={{ style: { fontSize: '1rem' } }} // Increased font size
-                />
-              </FormControl>
-              <FormControl fullWidth style={{ marginTop: "16px" }}>
-                <InputLabel shrink style={{ fontSize: '1rem' }}>Side</InputLabel> {/* Increased font size and shrink for background */}
+              <Typography variant="h6" sx={{ marginY: '4px' }}>Player {index + 1}</Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={9.6}>
+                  <TextField
+                    label="Name"
+                    name="name"
+                    value={player.name}
+                    onChange={(e) => handlePlayerChange(index, e)}
+                    variant="outlined"
+                    fullWidth
+                    required
+                    sx={{ marginY: '4px' }}
+                  />
+                </Grid>
+                <Grid item xs={2.4}>
+                  <TextField
+                    type="color"
+                    name="color"
+                    value={player.color}
+                    onChange={(e) => handlePlayerChange(index, e)}
+                    variant="outlined"
+                    fullWidth
+                    sx={{ marginY: '4px' }}
+                    inputProps={{ style: { padding: '0', height: '36px' } }} // Compact color picker
+                  />
+                </Grid>
+              </Grid>
+              <FormControl fullWidth style={{ marginTop: "4px" }}>
+                <InputLabel shrink style={{ fontSize: '0.9rem' }}>Side</InputLabel>
                 <Select
                   name="side"
                   value={player.side}
@@ -152,7 +157,9 @@ const MetadataForm = ({ onSubmit }) => {
             </Grid>
           ))}
           <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary" fullWidth>Submit</Button>
+            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: '4px' }}>
+              Submit
+            </Button>
           </Grid>
         </Grid>
       </form>
