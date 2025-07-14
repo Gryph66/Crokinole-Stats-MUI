@@ -80,13 +80,24 @@ const BoardState = ({
     "0,191,255": { points: 20, description: "Take Out 20" },
   };
 
-  // Set canvasMounted when refs are available
+  // Set canvasMounted when refs are available and ensure proper timing
   useEffect(() => {
-    if (canvasRef.current && rgbCanvasRef.current) {
-      setCanvasMounted(true);
-      console.log("Canvases mounted:", canvasRef.current, rgbCanvasRef.current);
+    const checkCanvasMount = () => {
+      if (canvasRef.current && rgbCanvasRef.current) {
+        setCanvasMounted(true);
+        console.log("Canvases mounted:", canvasRef.current, rgbCanvasRef.current);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (!checkCanvasMount()) {
+      // If not ready, check again after a short delay
+      const timer = setTimeout(checkCanvasMount, 100);
+      return () => clearTimeout(timer);
     }
-  }, [canvasRef, rgbCanvasRef]);
+  }, []);
 
   useEffect(() => {
     if (canvasRef.current && firstShooterSet) {
@@ -108,56 +119,66 @@ const BoardState = ({
     }
   }, [roundNumber, startingPlayer]);
 
-  // Load RGB image only after canvases are mounted
+  // Load RGB image with improved timing and error handling
   useEffect(() => {
-    if (!canvasMounted) return; // Wait for canvases to mount
-    const rgbCanvas = rgbCanvasRef.current;
-    if (!rgbCanvas) {
-      console.error("rgbCanvasRef is not initialized after mount check");
+    if (!canvasMounted || !rgbCanvasRef.current) {
+      console.log("Waiting for canvas mount or ref...");
       return;
     }
-    console.log("Attempting to load RGB image, trigger:", refreshTrigger); // Debug initial state
 
-    const loadImage = async () => {
-      try {
+    const rgbCanvas = rgbCanvasRef.current;
+    console.log("Attempting to load RGB image, trigger:", refreshTrigger);
+
+    const loadImage = () => {
+      return new Promise((resolve, reject) => {
         const loadedImage = new Image();
-        loadedImage.crossOrigin = "anonymous"; // Handle CORS issues
-        const loadPromise = new Promise((resolve, reject) => {
-          loadedImage.onload = () => resolve(loadedImage);
-          loadedImage.onerror = () => reject(new Error("Image load failed"));
-          loadedImage.src = "/crokinole_board_colored.png"; // Trigger load
-        });
-
-        const rgbImage = await loadPromise;
-        rgbCanvas.width = 600; // Explicitly set to match visible canvas
-        rgbCanvas.height = 500;
-        const context = rgbCanvas.getContext("2d");
-        context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height); // Ensure clean slate
-        context.drawImage(rgbImage, 0, 0, 600, 500); // Draw with explicit dimensions
-        console.log("RGB image loaded (trigger", refreshTrigger, "):", rgbImage.width, "x", rgbImage.height); // Debug
-        const samplePixel = context.getImageData(0, 0, 1, 1).data;
-        console.log("Sample RGB at 0,0:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
-        const centerPixel = context.getImageData(300, 250, 1, 1).data;
-        console.log("Center RGB at 300,250:", `${centerPixel[0]},${centerPixel[1]},${centerPixel[2]}`);
-        if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0 &&
-            centerPixel[0] === 0 && centerPixel[1] === 0 && centerPixel[2] === 0) {
-          console.warn("All sample pixels are black - image load failed");
-          throw new Error("Invalid image data");
-        }
-        setIsRgbLoaded(true); // Mark as loaded only if valid data
-      } catch (error) {
-        console.error("Image load error (trigger", refreshTrigger, "):", error.message);
-        if (refreshTrigger < 3) { // Retry up to 3 times
-          setRefreshTrigger(refreshTrigger + 1);
-          console.log("Forcing reload, trigger:", refreshTrigger + 1);
-        } else {
-          console.error("Max retries reached - image load failed permanently");
-        }
-      }
+        loadedImage.crossOrigin = "anonymous";
+        
+        loadedImage.onload = () => {
+          try {
+            rgbCanvas.width = 600;
+            rgbCanvas.height = 500;
+            const context = rgbCanvas.getContext("2d");
+            context.clearRect(0, 0, rgbCanvas.width, rgbCanvas.height);
+            context.drawImage(loadedImage, 0, 0, 600, 500);
+            
+            // Validate the image data
+            const samplePixel = context.getImageData(300, 250, 1, 1).data;
+            console.log("Center RGB at 300,250:", `${samplePixel[0]},${samplePixel[1]},${samplePixel[2]}`);
+            
+            if (samplePixel[0] === 0 && samplePixel[1] === 0 && samplePixel[2] === 0) {
+              throw new Error("Invalid image data - all pixels black");
+            }
+            
+            console.log("RGB image loaded successfully");
+            setIsRgbLoaded(true);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        loadedImage.onerror = () => {
+          reject(new Error("Image failed to load"));
+        };
+        
+        // Start loading
+        loadedImage.src = "/crokinole_board_colored.png";
+      });
     };
 
-    loadImage();
-  }, [refreshTrigger, canvasMounted]); // Trigger reload on refreshTrigger or canvasMounted change
+    loadImage().catch((error) => {
+      console.error("Image load error (trigger", refreshTrigger, "):", error.message);
+      if (refreshTrigger < 5) { // Increase retry attempts
+        setTimeout(() => {
+          setRefreshTrigger(refreshTrigger + 1);
+          console.log("Retrying image load, trigger:", refreshTrigger + 1);
+        }, 500); // Add delay before retry
+      } else {
+        console.error("Max retries reached - image load failed permanently");
+      }
+    });
+  }, [canvasMounted, refreshTrigger]); // Simplified dependency array
 
   const drawBoard = () => {
     const canvas = canvasRef.current;
