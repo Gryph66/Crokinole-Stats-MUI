@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import ShooterSelection from "./ShooterSelection";
 import ScoreInput from "./ScoreInput";
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton, Grid, Box } from "@mui/material";
+import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton, Grid, Box, Chip } from "@mui/material";
+import { Backspace, Undo } from "@mui/icons-material";
 
 const BoardState = ({
   onSaveShot,
@@ -15,6 +16,7 @@ const BoardState = ({
   onEndRound,
   rounds,
   undoLastShot,
+  metadata,
 }) => {
   const canvasRef = useRef(null);
   const [boardState, setBoardState] = useState([]);
@@ -70,6 +72,27 @@ const BoardState = ({
     };
     calculateTotals();
   }, [rounds]);
+
+  // Recalculate discCounts and twentyCounts from current round's shots
+  useEffect(() => {
+    const calculateCountsFromShots = () => {
+      const currentRoundIndex = rounds.findIndex(
+        (round) => round.roundNumber === roundNumber
+      );
+      if (currentRoundIndex < 0) return;
+
+      const allDiscs = rounds[currentRoundIndex].shots.reduce((acc, shot) => [...acc, ...shot.boardState], []);
+      setDiscCounts({
+        1: allDiscs.filter(d => d.owner.name === players[1]?.name).length,
+        2: allDiscs.filter(d => d.owner.name === players[2]?.name).length,
+      });
+      setTwentyCounts({
+        1: allDiscs.filter(d => d.owner.name === players[1]?.name && d.zone.includes("20")).length,
+        2: allDiscs.filter(d => d.owner.name === players[2]?.name && d.zone.includes("20")).length,
+      });
+    };
+    calculateCountsFromShots();
+  }, [rounds, roundNumber, players]);
 
   useEffect(() => {
     if (rgbDataRef.current) {
@@ -214,6 +237,14 @@ const BoardState = ({
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+        // Check for double-click (same x, y coordinates)
+        const isDoubleClick = boardState.some(disc => 
+          Math.abs(disc.x - x) < 1 && Math.abs(disc.y - y) < 1
+        );
+        if (isDoubleClick) {
+          alert("Double-click detected! Please click a different position.");
+          return;
+        }
         const discId = boardState.length + 1;
         const zoneInfo = getZoneInfo(x, y);
         const newDisc = {
@@ -282,12 +313,12 @@ const BoardState = ({
     if (boardState.length === 0) {
       return; // No discs to undo
     }
+    const lastDisc = boardState[boardState.length - 1];
     setBoardState(boardState.slice(0, -1));
     setDiscCounts((prevCounts) => ({
       ...prevCounts,
       [activeShooterIndex + 1]: prevCounts[activeShooterIndex + 1] - 1,
     }));
-    const lastDisc = boardState[boardState.length - 1];
     if (lastDisc?.zone?.includes("20")) {
       setTwentyCounts((prev) => ({
         ...prev,
@@ -312,14 +343,7 @@ const BoardState = ({
       setCurrentPlayerIndex(undoneShot.playerIndex);
       setActiveShooterIndex(undoneShot.playerIndex);
       setShotCount(undoneShot.shotCount);
-      setDiscCounts({
-        1: undoneShot.boardState.filter(d => d.owner === players[1]).length,
-        2: undoneShot.boardState.filter(d => d.owner === players[2]).length,
-      });
-      setTwentyCounts({
-        1: undoneShot.boardState.filter(d => d.owner === players[1] && d.zone.includes("20")).length,
-        2: undoneShot.boardState.filter(d => d.owner === players[2] && d.zone.includes("20")).length,
-      });
+      // Counts updated by useEffect
     }
   };
 
@@ -371,7 +395,7 @@ const BoardState = ({
         exclusive
         onChange={handleShooterChange}
         aria-label="select active shooter"
-        sx={{ maxWidth: '300px', width: '100%' }} // Fixed width to prevent shifting
+        sx={{ maxWidth: '300px', width: '100%' }}
       >
         <ToggleButton value={0} aria-label="Player 1" style={{ color: players[1]?.color || "#000" }}>
           {players[1]?.name || "Player 1"}
@@ -391,9 +415,32 @@ const BoardState = ({
     return currentRoundIndex >= 0 && rounds[currentRoundIndex].shots.length > 0;
   };
 
+  // Derive tournamentName from metadata
+  const tournamentName = metadata?.matchId && metadata?.date
+    ? `${metadata.matchId} ${new Date(metadata.date).getFullYear()}`
+    : "Unknown Tournament";
+
   return (
     <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
-      <Typography variant="h2" align="center" gutterBottom>Round {roundNumber}</Typography>
+      <Grid container spacing={1} sx={{ marginBottom: "10px" }}>
+        <Grid item xs={4}>
+          <Typography variant="body1" sx={{ color: '#333' }}>
+            {tournamentName}
+          </Typography>
+        </Grid>
+        <Grid item xs={4} sx={{ display: "flex", justifyContent: "center" }}>
+          <Paper elevation={1} sx={{ backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: 2 }}>
+            <Typography variant="h4" sx={{ color: '#333' }}>
+              Round {roundNumber}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Typography variant="body1" sx={{ color: '#333' }}>
+            {metadata?.tournamentRound || "Unknown Round"}
+          </Typography>
+        </Grid>
+      </Grid>
       {!firstShooterSet && (
         <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
           <Button
@@ -416,16 +463,21 @@ const BoardState = ({
       )}
       {firstShooterSet && (
         <>
-          <Typography variant="h3" align="center" style={{ color: players[currentPlayerIndex + 1]?.color || "#333", margin: "5px 0" }}>
-            {players[currentPlayerIndex + 1]?.name || "Player"} ||{" "}
-            {players[currentPlayerIndex + 1]?.side} side || Shot{" "}
-            {shots[currentPlayerIndex] + 1}
-          </Typography>
-          <Typography variant="subtitle1" align="center" style={{ margin: "5px 0" }}>
-            <span style={{ color: players[1].color }}>●</span> {discCounts[1]}
-            <span style={{ color: players[2].color, marginLeft: "5px" }}>●</span>{" "}
-            {discCounts[2]}
-          </Typography>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 4, padding: '8px', margin: '10px 0', backgroundColor: '#fafafa' }}>
+            <Typography variant="h6" align="center" sx={{ color: players[currentPlayerIndex + 1]?.color || "#333" }}>
+              {players[currentPlayerIndex + 1]?.name || "Player"} | {players[currentPlayerIndex + 1]?.side} side | Shot {shots[currentPlayerIndex] + 1}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+            <Chip
+              label={`Discs: ${discCounts[1]}`}
+              sx={{ backgroundColor: players[1]?.color || '#000', color: '#fff' }}
+            />
+            <Chip
+              label={`Discs: ${discCounts[2]}`}
+              sx={{ backgroundColor: players[2]?.color || '#f00', color: '#fff' }}
+            />
+          </Box>
           <Grid container spacing={1} sx={{ margin: "10px 0" }}>
             <Grid item xs={6} sx={{ display: "flex", gap: 1 }}>
               <Button
@@ -434,15 +486,17 @@ const BoardState = ({
                 color="primary"
                 onClick={handleUndoLastDisc}
                 disabled={boardState.length === 0}
+                startIcon={<Backspace />}
               >
                 Undo Last Disc
               </Button>
               <Button
                 variant="outlined"
                 size="small"
-                color="primary"
+                color="secondary"
                 onClick={handleUndoLastSavedShot}
                 disabled={!canUndoSavedShot()}
+                startIcon={<Undo />}
               >
                 Undo Last Saved Shot
               </Button>

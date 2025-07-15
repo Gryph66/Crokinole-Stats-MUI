@@ -106,7 +106,7 @@ const App = () => {
       });
     }
 
-    return undoneShot; // Return shot data for BoardState to restore
+    return undoneShot;
   };
 
   const handleEndRound = (scores) => {
@@ -195,6 +195,7 @@ const App = () => {
                 onEndRound={handleEndRound}
                 rounds={rounds}
                 undoLastShot={undoLastShot}
+                metadata={metadata} // Added metadata prop
               />
               <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
                 Export Filename: {getFilename()}
