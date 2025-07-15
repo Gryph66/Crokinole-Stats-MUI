@@ -395,12 +395,30 @@ const BoardState = ({
         exclusive
         onChange={handleShooterChange}
         aria-label="select active shooter"
-        sx={{ maxWidth: '300px', width: '100%' }}
+        sx={{ maxWidth: '400px', minWidth: '300px', width: '100%' }}
       >
-        <ToggleButton value={0} aria-label="Player 1" style={{ color: players[1]?.color || "#000" }}>
+        <ToggleButton value={0} aria-label="Player 1" sx={{ display: 'flex', alignItems: 'center', color: players[1]?.color || "#000", whiteSpace: 'nowrap' }}>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              backgroundColor: players[1]?.color || '#000',
+              marginRight: '8px'
+            }}
+          />
           {players[1]?.name || "Player 1"}
         </ToggleButton>
-        <ToggleButton value={1} aria-label="Player 2" style={{ color: players[2]?.color || "#f00" }}>
+        <ToggleButton value={1} aria-label="Player 2" sx={{ display: 'flex', alignItems: 'center', color: players[2]?.color || "#f00", whiteSpace: 'nowrap' }}>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              backgroundColor: players[2]?.color || '#f00',
+              marginRight: '8px'
+            }}
+          />
           {players[2]?.name || "Player 2"}
         </ToggleButton>
       </ToggleButtonGroup>
@@ -430,7 +448,7 @@ const BoardState = ({
         </Grid>
         <Grid item xs={4} sx={{ display: "flex", justifyContent: "center" }}>
           <Paper elevation={1} sx={{ backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: 2 }}>
-            <Typography variant="h4" sx={{ color: '#333' }}>
+            <Typography variant="body1" sx={{ color: '#333' }}>
               Round {roundNumber}
             </Typography>
           </Paper>
@@ -463,32 +481,32 @@ const BoardState = ({
       )}
       {firstShooterSet && (
         <>
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 4, padding: '8px', margin: '10px 0', backgroundColor: '#fafafa' }}>
-            <Typography variant="h6" align="center" sx={{ color: players[currentPlayerIndex + 1]?.color || "#333" }}>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 4, padding: '4px', margin: '10px 0', backgroundColor: '#fafafa' }}>
+            <Typography variant="body2" align="center" sx={{ color: players[currentPlayerIndex + 1]?.color || "#333" }}>
               {players[currentPlayerIndex + 1]?.name || "Player"} | {players[currentPlayerIndex + 1]?.side} side | Shot {shots[currentPlayerIndex] + 1}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
             <Chip
-              label={`Discs: ${discCounts[1]}`}
+              label={`20s: ${twentyCounts[1]}`}
               sx={{ backgroundColor: players[1]?.color || '#000', color: '#fff' }}
             />
             <Chip
-              label={`Discs: ${discCounts[2]}`}
+              label={`20s: ${twentyCounts[2]}`}
               sx={{ backgroundColor: players[2]?.color || '#f00', color: '#fff' }}
             />
           </Box>
           <Grid container spacing={1} sx={{ margin: "10px 0" }}>
-            <Grid item xs={6} sx={{ display: "flex", gap: 1 }}>
+            <Grid item xs={12} sx={{ display: "flex", gap: 1 }}>
               <Button
                 variant="outlined"
                 size="small"
-                color="primary"
+                sx={{ color: '#1976d2' }}
                 onClick={handleUndoLastDisc}
                 disabled={boardState.length === 0}
                 startIcon={<Backspace />}
               >
-                Undo Last Disc
+                Undo Disc
               </Button>
               <Button
                 variant="outlined"
@@ -498,27 +516,31 @@ const BoardState = ({
                 disabled={!canUndoSavedShot()}
                 startIcon={<Undo />}
               >
-                Undo Last Saved Shot
+                Undo Shot
               </Button>
             </Grid>
-            <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
+          </Grid>
+          <Grid container spacing={1} sx={{ margin: "10px 0", alignItems: "center" }}>
+            <Grid item xs={4} /> {/* Spacer */}
+            <Grid item xs={4} sx={{ display: "flex", justifyContent: "center" }}>
+              <CustomShooterSelection
+                activeShooterIndex={activeShooterIndex}
+                players={players}
+                handleSetActiveShooter={handleSetActiveShooter}
+              />
+            </Grid>
+            <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
                 size="small"
                 color="primary"
                 onClick={handleSaveShot}
+                disabled={boardState.length === 0}
               >
                 Save Shot
               </Button>
             </Grid>
           </Grid>
-          <Box sx={{ display: "flex", justifyContent: "center", margin: "10px 0" }}>
-            <CustomShooterSelection
-              activeShooterIndex={activeShooterIndex}
-              players={players}
-              handleSetActiveShooter={handleSetActiveShooter}
-            />
-          </Box>
           <canvas
             ref={canvasRef}
             width={600}
