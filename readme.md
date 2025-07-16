@@ -15,31 +15,36 @@
 </div>
 
 ---
-**Crokinole Stats MUI** is a modern, web-based application designed to streamline the tracking and analysis of Crokinole matches. Built with React and Material-UI, this tool enables users to input game metadata, record shots on an interactive virtual Crokinole board, manage scores, and export detailed game data as JSON files. Ideal for tournament organizers, players, and enthusiasts, it provides a polished, user-friendly interface for capturing comprehensive match statistics.
+**Crokinole Stats MUI** is a modern, web-based application for tracking and analyzing Crokinole matches. Built with React and Material-UI, it provides an intuitive interface for inputting game metadata, recording shots on an interactive virtual board, managing scores, and exporting detailed game data as JSON files. Perfect for tournament organizers, players, and enthusiasts, it offers a polished, compact, and responsive design for comprehensive match statistics.
 
 ## Live Demo
 
 Try the app live at [https://crokinole-shots.replit.app/](https://crokinole-shots.replit.app/).  
-*Note*: Hosted on Replit, the demo may require a refresh to ensure images (e.g., the Crokinole board) load correctly.
+*Note*: Hosted on Replit, the demo may require a refresh to ensure images (e.g., Crokinole board) load correctly.
 
 ## Video Demonstration
 
-Watch a demonstration of the app in action, tracking a Crokinole match from the Turtle Island 2017 tournament:  
+Watch a demonstration of an earlier version tracking a match from the Turtle Island 2017 tournament:  
 [View Video on Dropbox](https://www.dropbox.com/scl/fi/de8f3a9ac0grrsuzl2bll/example_shottracking_turtleisland2017.mov?rlkey=s7lh3huohseutsv3wenwh7odb&st=q53sg3sy&dl=0)  
-*Note*: Ensure you have a Dropbox-compatible media player to view the `.mov` file. The video reflects an earlier version of the app; the current version includes a more compact metadata form.
+*Note*: The current version includes an enhanced UI with a compact metadata form, centered player selection with disc indicators, disabled "Save Shot" button for empty shots, and other improvements.
 
 ## Features
 
-- **Interactive Crokinole Board**: Record shots by clicking on a virtual board, with automatic zone detection (e.g., Gutter, Outer Ring, 20s) using RGB color mapping.
-- **Streamlined Metadata Entry**: Input player names, match ID, date, tournament round, and YouTube link in a compact form, with an automatically generated "Tournament Name" (e.g., `Crokinole Cup 2025`) displayed in a small font for verification.
-- **Real-Time Score Tracking**: Monitor shots and 20s per round in a clean Material-UI table, with intuitive controls for shot management.
-- **Efficient Shot Management**: Use "Undo Last Shot" and "Save Shot" buttons, positioned above the board alongside player selection, for optimal mouse efficiency.
-- **JSON Export**: Export game data in a structured JSON format with filenames like `classified_FirstNamePlayer1FirstNamePlayer2_YearMatchID_TournamentRound.json` (e.g., `classified_ShawnDevon_2025CrokinoleCup_SemiFinal.json`).
-- **Responsive Design**: Leverages Material-UI for a professional, compact, and responsive UI that fits most standard displays.
+- **Interactive Crokinole Board**: Record shots by clicking on a virtual board with automatic zone detection (e.g., Gutter, Outer Ring, 20s) using RGB color mapping. Double-click prevention alerts avoid duplicate disc placement.
+- **Enhanced Shot Tracking UI**:
+  - **Header**: Displays "Tournament Name" (left), "Round Number" (center, highlighted box), and "Tournament Round" (right), all with consistent font size.
+  - **Shooter Info**: Compact display of current player, side, and shot number in a bordered box.
+  - **20s Counts**: Chip components show 20s scored per player, matching the stats table, using player-specific colors.
+  - **Undo Actions**: Distinct buttons for "Undo Disc" (dark blue, Backspace icon) and "Undo Shot" (purple, Undo icon).
+  - **Player Selection**: Centered toggle buttons with disc-like circles before names, wider to prevent wrapping, and "Save Shot" button on the right (disabled until a disc is added).
+- **Streamlined Metadata Entry**: Compact form for match ID, date, tournament round, YouTube link, and player details (names, sides, colors), with "Tournament Name" (e.g., `Crokinole Cup 2025`) displayed.
+- **Real-Time Score Tracking**: Monitor shots, 20s, and cumulative match scores in a stats table, updated after each round.
+- **Efficient Shot Management**: Add discs, undo discs or shots, and save shots (only with discs) with centered player selection.
+- **Compact Score Input**: Two-row form with right-justified player names for round-end scoring.
+- **JSON Export**: Export game data with filenames like `classified_FirstNamePlayer1FirstNamePlayer2_YearMatchID_TournamentRound.json`.
+- **Responsive Design**: Material-UI ensures a professional, compact UI (~740-760px height) fitting standard viewports (e.g., 1366x768).
 
 ## Prerequisites
-
-Before setting up Crokinole Stats MUI, ensure you have the following installed:
 
 - **Node.js** (v14 or higher)
 - **npm** (v6 or higher) or **yarn**
@@ -62,6 +67,7 @@ Before setting up Crokinole Stats MUI, ensure you have the following installed:
    ```bash
    yarn install
    ```
+   Ensure `@mui/icons-material` version matches `@mui/material` (e.g., `^5.15.0` for `@mui/material@^5.18.0`).
 
 3. **Start the Development Server**:
    ```bash
@@ -71,50 +77,51 @@ Before setting up Crokinole Stats MUI, ensure you have the following installed:
    ```bash
    yarn start
    ```
-   The app will open in your default browser at `http://localhost:3000`.
+   The app opens at `http://localhost:3000`.
 
 ## Usage
 
 ### 1. Enter Game Metadata
-- On the metadata entry screen, provide the following details in a compact form:
-  - **Match ID**: Unique identifier for the match (e.g., `Crokinole Cup` or `WCC`).
-  - **Date**: The match date (e.g., `2025-07-07`).
-  - **Tournament Round**: The round of the tournament (e.g., `Semi Final` or `3rd Place`).
-  - **YouTube Link**: A link to the match video.
-  - **Player Names and Details**: Names and board sides (Top/Bottom) for both players, with color pickers (~20% width) beside names (~80% width) for efficiency.
-- The "Tournament Name" (e.g., `Crokinole Cup 2025`) is automatically generated from the Match ID and year, displayed in a small font above the YouTube Link field for verification.
-- Click "Submit" to proceed to the game tracking interface.
+- Input match details in a compact form:
+  - **Match ID**: e.g., `Crokinole Cup`.
+  - **Date**: e.g., `2025-07-07`.
+  - **Tournament Round**: e.g., `Semi Final`.
+  - **YouTube Link**: Video link for the match.
+  - **Player Names and Details**: Names, board sides (Top/Bottom), and colors.
+- "Tournament Name" (e.g., `Crokinole Cup 2025`) is displayed above the YouTube Link field.
+- Click "Submit" to proceed.
 
-**Screenshot Placeholder**: Add a screenshot of the metadata entry form here, showing the compact layout with "Tournament Name" above the YouTube Link field and side-by-side name/color fields (`docs/screenshots/metadata-form.png`).
+**Screenshot**: [docs/screenshots/metadata-form.png](docs/screenshots/metadata-form.png) *(Placeholder: Update with current screenshot)*
 
 ### 2. Track Shots
-- **Select First Shooter**: Choose which player shoots first using the provided buttons.
-- **Select Active Player**: Toggle between players using buttons above the board.
-- **Record Shots**: Click on the virtual Crokinole board to place discs, with zones automatically detected based on RGB values.
-- **Manage Shots**: Use "Undo Last Shot" and "Save Shot" buttons, located above the board alongside player selection, for efficient shot management.
-- **View Stats**: A table below the board displays real-time shot counts and 20s for each player.
+- **Select First Shooter**: Choose using centered buttons.
+- **Header**: Shows "Tournament Name" (left), "Round Number" (center, highlighted), "Tournament Round" (right), all same font size.
+- **Shooter Info**: Compact display of current player, side, and shot number (~50% smaller).
+- **20s Counts**: Chips show 20s per player, matching stats table.
+- **Record Shots**: Click the board to place discs, with zone detection. Double-clicking triggers an alert ("Double-click detected!").
+- **Manage Shots**:
+  - "Undo Disc" (dark blue, Backspace icon): Remove the last disc.
+  - "Undo Shot" (purple, Undo icon): Revert the last saved shot.
+  - "Save Shot" (right, disabled until a disc is added): Commit shots.
+- **Player Selection**: Centered toggle buttons with disc-like circles, wide enough for names (e.g., "Connor Reinman") on a single line.
+- **Stats Table**: Real-time shots, 20s, and match scores.
 
-**Screenshot Placeholder**: Add a screenshot of the game tracking interface, showing the board, buttons, player selection, and stats table (`docs/screenshots/game-tracking.png`).
+**Screenshot**: [docs/screenshots/game-tracking.png](docs/screenshots/game-tracking.png) *(Placeholder: Update with current screenshot)*
 
 ### 3. End Round
-- After both players take 8 shots (16 total), the round ends automatically.
-- Enter final scores (20s and points) for each player in the score input form.
-- Submit to start the next round.
+- After 16 shots, enter scores in a compact two-row form with right-justified names.
+- Submit to update "Match Score" and start the next round.
 
-**Screenshot Placeholder**: Add a screenshot of the end-of-round score input form (`docs/screenshots/score-input.png`).
+**Screenshot**: [docs/screenshots/score-input.png](docs/screenshots/score-input.png) *(Placeholder: Update with current screenshot)*
 
 ### 4. Export Game Data
-- Click the "End Game" button to export the game data as a JSON file.
-- The filename is displayed above the button (e.g., `classified_ShawnDevon_2025CrokinoleCup_SemiFinal.json`) for verification.
-- The JSON includes metadata (players, match ID, date, tournament name, etc.) and round data (shots, scores).
+- Click "End Game" to export JSON (e.g., `classified_ConnorAndrew_2025CrokinoleCup_SemiFinal.json`).
+- JSON includes metadata and round data.
 
-**Screenshot Placeholder**: Add a screenshot showing the "End Game" button and filename display (`docs/screenshots/export.png`).
+**Screenshot**: [docs/screenshots/export.png](docs/screenshots/export.png) *(Placeholder: Update with current screenshot)*
 
 ### 5. Review Exported Data
-- The exported JSON file contains:
-  - `metadata`: Player details, match ID, date, tournament name (`tournamentName`), and round.
-  - `rounds`: Array of rounds with shot data and scores.
-- Use the JSON for analysis, sharing, or importing into other tools.
+- JSON contains `metadata` (players, match ID, tournament name, etc.) and `rounds` (shots, scores).
 
 ## Project Structure
 
@@ -125,53 +132,48 @@ Crokinole-Stats-MUI/
 │   ├── crokinole_board_colored.png  # Colored board for zone detection
 │   └── index.html
 ├── src/
+│   ├── App.jsx                      # Root component with error boundary
 │   ├── BoardState.jsx               # Main game tracking component
 │   ├── MetadataForm.jsx             # Form for entering game metadata
-│   ├── ScoreInput.jsx               # Component for end-of-round scoring
+│   ├── ScoreInput.jsx               # End-of-round scoring component
 │   ├── ShooterSelection.jsx         # Player selection component
 │   ├── theme.js                     # Material-UI theme configuration
-│   └── App.jsx                      # Root component
 ├── package.json
 └── README.md
 ```
 
 ## Dependencies
 
-- **React**: Frontend framework for building the UI.
-- **Material-UI**: Provides professional, responsive components and theming.
-- **Canvas API**: Used for rendering the Crokinole board and tracking shots.
+- **React**: Frontend framework.
+- **Material-UI**: Components and theming (`@mui/material@^5.18.0`).
+- **Material-UI Icons**: Icons for UI (`@mui/icons-material@^5.x.x`).
+- **Canvas API**: For board rendering and shot tracking.
 
-See `package.json` for a full list of dependencies.
+See `package.json` for details. Ensure `@mui/icons-material` version matches `@mui/material`.
 
 ## Contributing
 
-Contributions are welcome! To contribute:
-
 1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Make your changes and commit (`git commit -m "Add your feature"`).
-4. Push to your branch (`git push origin feature/your-feature`).
-5. Open a pull request on [GitHub](https://github.com/Gryph66/Crokinole-Stats-MUI/pulls) with a detailed description of your changes.
-
-Please ensure your code follows the existing style and includes tests where applicable.
+2. Create a branch (`git checkout -b feature/your-feature`).
+3. Commit changes (`git commit -m "Add your feature"`).
+4. Push to the branch (`git push origin feature/your-feature`).
+5. Open a pull request on [GitHub](https://github.com/Gryph66/Crokinole-Stats-MUI/pulls).
 
 ## Issues
 
-If you encounter bugs or have feature requests, please open an issue on the [GitHub repository](https://github.com/Gryph66/Crokinole-Stats-MUI/issues). Include:
-- A clear description of the issue.
+Report bugs or feature requests on [GitHub Issues](https://github.com/Gryph66/Crokinole-Stats-MUI/issues) with:
+- Description of the issue.
 - Steps to reproduce.
-- Any relevant screenshots or logs.
+- Screenshots or logs.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-- Built for the Crokinole community to enhance match tracking and analysis.
-- Thanks to [Material-UI](https://mui.com/) for a robust component library.
-- Special thanks to contributors and testers who helped refine the application.
+- Built for the Crokinole community.
+- Thanks to [Material-UI](https://mui.com/) for components and icons.
+- Gratitude to contributors and testers.
 
----
-
-*Happy Crokinole tracking! For questions or feedback, open an issue on [GitHub](https://github.com/Gryph66/Crokinole-Stats-MUI/issues).*
+*Happy Crokinole tracking! Open an issue on [GitHub](https://github.com/Gryph66/Crokinole-Stats-MUI/issues) for feedback.*

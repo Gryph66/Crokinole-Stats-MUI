@@ -354,7 +354,7 @@ const BoardState = ({
       ...prevScores,
       [player]: {
         ...prevScores[player],
-        [scoreType]: parseInt(value, 10) || 0,
+        [scoreType]: value === "" ? 0 : isNaN(parseInt(value, 10)) ? 0 : parseInt(value, 10),
       },
     }));
   };
@@ -369,14 +369,15 @@ const BoardState = ({
     });
     setTwentyCounts({ 1: 0, 2: 0 });
     setPreviousBoardState([]);
+    setBoardState([]);
   };
 
   const calculateTotalTwenties = () => {
-    return scores[1].twenties + scores[2].twenties;
+    return (scores[1].twenties || 0) + (scores[2].twenties || 0);
   };
 
   const calculateTotalPoints = () => {
-    return scores[1].points + scores[2].points;
+    return (scores[1].points || 0) + (scores[2].points || 0);
   };
 
   const CustomShooterSelection = ({ activeShooterIndex, players, handleSetActiveShooter }) => {
@@ -482,8 +483,8 @@ const BoardState = ({
       {firstShooterSet && (
         <>
           <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 4, padding: '4px', margin: '10px 0', backgroundColor: '#fafafa' }}>
-            <Typography variant="body2" align="center" sx={{ color: players[currentPlayerIndex + 1]?.color || "#333" }}>
-              {players[currentPlayerIndex + 1]?.name || "Player"} | {players[currentPlayerIndex + 1]?.side} side | Shot {shots[currentPlayerIndex] + 1}
+            <Typography variant="body2" align="center" sx={{ color: '#333' }}>
+              {roundEnded ? "End of Round" : `${players[currentPlayerIndex + 1]?.name || "Player"} | ${players[currentPlayerIndex + 1]?.side} side | Shot ${shots[currentPlayerIndex] + 1}`}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
@@ -603,6 +604,7 @@ const BoardState = ({
                 calculateTotalTwenties={calculateTotalTwenties}
                 calculateTotalPoints={calculateTotalPoints}
                 roundNumber={roundNumber}
+                twentyCounts={twentyCounts}
               />
             </Paper>
           )}
