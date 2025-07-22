@@ -51,9 +51,9 @@ const BoardState = ({
     "228,28,229": { points: 20, description: "Bounce Back 20" },
     "160,156,94": { points: 20, description: "Angle In 20" },
     "162,162,153": { points: 20, description: "Magic 20" },
-    "246,173,0": { points: 20, description: "Invalid Shot" },
+    "246,173,0": { points: 0, description: "Invalid Shot" },
     "101,102,184": { points: 20, description: "Opponent 20" },
-    "217,171,196": { points: 20, description: "Other Shot" },
+    "217,171,196": { points: 0, description: "Other Shot" },
     "0,191,255": { points: 20, description: "Take Out 20" },
   };
 
