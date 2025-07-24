@@ -192,7 +192,10 @@ const App = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          filename: filename
+        }),
         timeout: 30000
       });
 
