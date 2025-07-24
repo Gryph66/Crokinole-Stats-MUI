@@ -69,12 +69,11 @@ const ScoreInput = ({
                 <TextField
                   label="20s"
                   name="1_twenties"
-                  type="number"
+                  type="text"
                   value={scores[1].twenties}
                   onChange={handleInputChange}
                   size="small"
                   fullWidth
-                  inputProps={{ min: 0 }}
                 />
               </Grid>
               <Grid item xs={3}>
@@ -102,12 +101,11 @@ const ScoreInput = ({
                 <TextField
                   label="20s"
                   name="2_twenties"
-                  type="number"
+                  type="text"
                   value={scores[2].twenties}
                   onChange={handleInputChange}
                   size="small"
                   fullWidth
-                  inputProps={{ min: 0 }}
                 />
               </Grid>
               <Grid item xs={3}>
