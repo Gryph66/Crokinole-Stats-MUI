@@ -398,7 +398,7 @@ const BoardState = ({
         aria-label="select active shooter"
         sx={{ maxWidth: '400px', minWidth: '300px', width: '100%' }}
       >
-        <ToggleButton value={0} aria-label="Player 1" sx={{ display: 'flex', alignItems: 'center', color: players[1]?.color || "#000", whiteSpace: 'nowrap' }}>
+        <ToggleButton value={0} aria-label="Player 1" sx={{ display: 'flex', alignItems: 'center', color: players[1]?.color || "#000", whiteSpace: 'nowrap', flex: 1, justifyContent: 'flex-start' }}>
           <Box
             sx={{
               width: 10,
@@ -410,7 +410,7 @@ const BoardState = ({
           />
           {players[1]?.name || "Player 1"}
         </ToggleButton>
-        <ToggleButton value={1} aria-label="Player 2" sx={{ display: 'flex', alignItems: 'center', color: players[2]?.color || "#f00", whiteSpace: 'nowrap' }}>
+        <ToggleButton value={1} aria-label="Player 2" sx={{ display: 'flex', alignItems: 'center', color: players[2]?.color || "#f00", whiteSpace: 'nowrap', flex: 1, justifyContent: 'flex-start' }}>
           <Box
             sx={{
               width: 10,
@@ -522,14 +522,14 @@ const BoardState = ({
             </Grid>
           </Grid>
           <Grid container spacing={1} sx={{ margin: "10px 0", alignItems: "center" }}>
-            <Grid item xs={4} /> {/* Spacer */}
-            <Grid item xs={4} sx={{ display: "flex", justifyContent: "center" }}>
+            <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-start" }}>
               <CustomShooterSelection
                 activeShooterIndex={activeShooterIndex}
                 players={players}
                 handleSetActiveShooter={handleSetActiveShooter}
               />
             </Grid>
+            <Grid item xs={4} /> {/* Spacer */}
             <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
