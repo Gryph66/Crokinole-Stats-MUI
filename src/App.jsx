@@ -173,19 +173,30 @@ const App = () => {
   const sendDataToProcessingApp = async (data) => {
     const api_url = "https://crokinole-shot-analytics-gryph66.replit.app/upload-classified";
     
+    // Generate the proper filename
+    const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
+    const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
+    const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
+    const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
+    const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
+    const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
+    
     try {
       const response = await fetch(api_url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          filename: filename
+        }),
         timeout: 30000
       });
       
       if (response.ok) {
         const result = await response.json();
-        alert(`✓ Successfully sent: ${result.filename}`);
+        alert(`✓ Successfully sent: ${result.filename || filename}`);
         return true;
       } else {
         const errorText = await response.text();
