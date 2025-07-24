@@ -135,9 +135,47 @@ const App = () => {
     setStartingPlayer(nextStartingPlayer);
   };
 
-  const handleGameOver = () => {
+  const sendDataToProcessingApp = async (data) => {
+    const api_url = "https://crokinole-shot-analytics.gryph66.replit.dev/upload-classified";
+    
+    try {
+      const response = await fetch(api_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        timeout: 30000
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✓ Successfully sent: ${result.filename}`);
+        return true;
+      } else {
+        const errorText = await response.text();
+        alert(`✗ Error: ${response.status} - ${errorText}`);
+        return false;
+      }
+    } catch (error) {
+      alert(`✗ Failed to send: ${error.message}`);
+      return false;
+    }
+  };
+
+  const handleGameOverDownload = () => {
     setGameOver(true);
     exportToJSON();
+  };
+
+  const handleGameOverUpload = async () => {
+    setGameOver(true);
+    const filteredRounds = rounds.filter((round, index) => {
+      return index === rounds.length - 1 ? round.shots.length > 0 : true;
+    });
+    
+    const gameData = { metadata, rounds: filteredRounds };
+    await sendDataToProcessingApp(gameData);
   };
 
   const exportToJSON = () => {
@@ -200,7 +238,10 @@ const App = () => {
               <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
                 Export Filename: {getFilename()}
               </Typography>
-              <button onClick={handleGameOver}>End Game</button>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', margin: '10px 0' }}>
+                <button onClick={handleGameOverDownload}>End Game - Download</button>
+                <button onClick={handleGameOverUpload}>End Game - Send To App</button>
+              </div>
               <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
             </>
           )}
