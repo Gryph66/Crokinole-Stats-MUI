@@ -1,7 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import ShooterSelection from "./ShooterSelection";
 import ScoreInput from "./ScoreInput";
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, ToggleButtonGroup, ToggleButton, Grid, Box, Chip } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  ToggleButtonGroup,
+  ToggleButton,
+  Grid,
+  Box,
+  Chip,
+} from "@mui/material";
 import { Backspace, Undo } from "@mui/icons-material";
 
 const BoardState = ({
@@ -53,7 +68,7 @@ const BoardState = ({
     "162,162,153": { points: 20, description: "Magic 20" },
     "246,173,0": { points: 0, description: "Invalid Shot" },
     "101,102,184": { points: 20, description: "Opponent 20" },
-    "217,171,196": { points: 20, description: "Other Shot" },
+    "217,171,196": { points: 0, description: "Other Shot" },
     "0,191,255": { points: 20, description: "Take Out 20" },
   };
 
@@ -65,7 +80,7 @@ const BoardState = ({
           player1: acc.player1 + (round.scores[1]?.points || 0),
           player2: acc.player2 + (round.scores[2]?.points || 0),
         }),
-        { player1: 0, player2: 0 }
+        { player1: 0, player2: 0 },
       );
       setPlayer1Points(totals.player1);
       setPlayer2Points(totals.player2);
@@ -77,18 +92,25 @@ const BoardState = ({
   useEffect(() => {
     const calculateCountsFromShots = () => {
       const currentRoundIndex = rounds.findIndex(
-        (round) => round.roundNumber === roundNumber
+        (round) => round.roundNumber === roundNumber,
       );
       if (currentRoundIndex < 0) return;
 
-      const allDiscs = rounds[currentRoundIndex].shots.reduce((acc, shot) => [...acc, ...shot.boardState], []);
+      const allDiscs = rounds[currentRoundIndex].shots.reduce(
+        (acc, shot) => [...acc, ...shot.boardState],
+        [],
+      );
       setDiscCounts({
-        1: allDiscs.filter(d => d.owner.name === players[1]?.name).length,
-        2: allDiscs.filter(d => d.owner.name === players[2]?.name).length,
+        1: allDiscs.filter((d) => d.owner.name === players[1]?.name).length,
+        2: allDiscs.filter((d) => d.owner.name === players[2]?.name).length,
       });
       setTwentyCounts({
-        1: allDiscs.filter(d => d.owner.name === players[1]?.name && d.zone.includes("20")).length,
-        2: allDiscs.filter(d => d.owner.name === players[2]?.name && d.zone.includes("20")).length,
+        1: allDiscs.filter(
+          (d) => d.owner.name === players[1]?.name && d.zone.includes("20"),
+        ).length,
+        2: allDiscs.filter(
+          (d) => d.owner.name === players[2]?.name && d.zone.includes("20"),
+        ).length,
       });
     };
     calculateCountsFromShots();
@@ -112,10 +134,10 @@ const BoardState = ({
         img.src = "/crokinole_board_colored.png";
         await imageLoaded;
 
-        const tempCanvas = document.createElement('canvas');
+        const tempCanvas = document.createElement("canvas");
         tempCanvas.width = 600;
         tempCanvas.height = 500;
-        const tempCtx = tempCanvas.getContext('2d');
+        const tempCtx = tempCanvas.getContext("2d");
         tempCtx.drawImage(img, 0, 0, 600, 500);
 
         rgbDataRef.current = tempCtx.getImageData(0, 0, 600, 500);
@@ -202,13 +224,16 @@ const BoardState = ({
       const pixel = [
         imageData.data[index],
         imageData.data[index + 1],
-        imageData.data[index + 2]
+        imageData.data[index + 2],
       ];
 
       const rgbColor = `${pixel[0]},${pixel[1]},${pixel[2]}`;
       console.log("Zone detection - Click:", x, y, "RGB:", rgbColor);
 
-      let zoneInfo = zoneDefinitions[rgbColor] || { points: 0, description: "Unknown" };
+      let zoneInfo = zoneDefinitions[rgbColor] || {
+        points: 0,
+        description: "Unknown",
+      };
       if (zoneInfo.description === "Unknown") {
         for (let defRgb in zoneDefinitions) {
           const [defR, defG, defB] = defRgb.split(",").map(Number);
@@ -218,7 +243,12 @@ const BoardState = ({
             Math.abs(pixel[2] - defB) <= 5
           ) {
             zoneInfo = zoneDefinitions[defRgb];
-            console.log("Matched zone with tolerance:", defRgb, "->", zoneInfo.description);
+            console.log(
+              "Matched zone with tolerance:",
+              defRgb,
+              "->",
+              zoneInfo.description,
+            );
             break;
           }
         }
@@ -238,8 +268,8 @@ const BoardState = ({
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         // Check for double-click (same x, y coordinates)
-        const isDoubleClick = boardState.some(disc => 
-          Math.abs(disc.x - x) < 1 && Math.abs(disc.y - y) < 1
+        const isDoubleClick = boardState.some(
+          (disc) => Math.abs(disc.x - x) < 1 && Math.abs(disc.y - y) < 1,
         );
         if (isDoubleClick) {
           alert("Double-click detected! Please click a different position.");
@@ -329,7 +359,7 @@ const BoardState = ({
 
   const handleUndoLastSavedShot = () => {
     const currentRoundIndex = rounds.findIndex(
-      (round) => round.roundNumber === roundNumber
+      (round) => round.roundNumber === roundNumber,
     );
     if (currentRoundIndex < 0 || rounds[currentRoundIndex].shots.length === 0) {
       return; // No saved shots to undo
@@ -354,7 +384,12 @@ const BoardState = ({
       ...prevScores,
       [player]: {
         ...prevScores[player],
-        [scoreType]: value === "" ? 0 : isNaN(parseInt(value, 10)) ? 0 : parseInt(value, 10),
+        [scoreType]:
+          value === ""
+            ? 0
+            : isNaN(parseInt(value, 10))
+              ? 0
+              : parseInt(value, 10),
       },
     }));
   };
@@ -380,7 +415,11 @@ const BoardState = ({
     return (scores[1].points || 0) + (scores[2].points || 0);
   };
 
-  const CustomShooterSelection = ({ activeShooterIndex, players, handleSetActiveShooter }) => {
+  const CustomShooterSelection = ({
+    activeShooterIndex,
+    players,
+    handleSetActiveShooter,
+  }) => {
     const [selectedIndex, setSelectedIndex] = useState(activeShooterIndex);
 
     const handleShooterChange = (event, newIndex) => {
@@ -396,28 +435,50 @@ const BoardState = ({
         exclusive
         onChange={handleShooterChange}
         aria-label="select active shooter"
-        sx={{ maxWidth: '400px', minWidth: '300px', width: '100%' }}
+        sx={{ maxWidth: "400px", minWidth: "300px", width: "100%" }}
       >
-        <ToggleButton value={0} aria-label="Player 1" sx={{ display: 'flex', alignItems: 'center', color: players[1]?.color || "#000", whiteSpace: 'nowrap', flex: 1, justifyContent: 'flex-start' }}>
+        <ToggleButton
+          value={0}
+          aria-label="Player 1"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            color: players[1]?.color || "#000",
+            whiteSpace: "nowrap",
+            flex: 1,
+            justifyContent: "flex-start",
+          }}
+        >
           <Box
             sx={{
               width: 10,
               height: 10,
-              borderRadius: '50%',
-              backgroundColor: players[1]?.color || '#000',
-              marginRight: '8px'
+              borderRadius: "50%",
+              backgroundColor: players[1]?.color || "#000",
+              marginRight: "8px",
             }}
           />
           {players[1]?.name || "Player 1"}
         </ToggleButton>
-        <ToggleButton value={1} aria-label="Player 2" sx={{ display: 'flex', alignItems: 'center', color: players[2]?.color || "#f00", whiteSpace: 'nowrap', flex: 1, justifyContent: 'flex-start' }}>
+        <ToggleButton
+          value={1}
+          aria-label="Player 2"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            color: players[2]?.color || "#f00",
+            whiteSpace: "nowrap",
+            flex: 1,
+            justifyContent: "flex-start",
+          }}
+        >
           <Box
             sx={{
               width: 10,
               height: 10,
-              borderRadius: '50%',
-              backgroundColor: players[2]?.color || '#f00',
-              marginRight: '8px'
+              borderRadius: "50%",
+              backgroundColor: players[2]?.color || "#f00",
+              marginRight: "8px",
             }}
           />
           {players[2]?.name || "Player 2"}
@@ -429,39 +490,63 @@ const BoardState = ({
   // Check if undo last saved shot is possible
   const canUndoSavedShot = () => {
     const currentRoundIndex = rounds.findIndex(
-      (round) => round.roundNumber === roundNumber
+      (round) => round.roundNumber === roundNumber,
     );
     return currentRoundIndex >= 0 && rounds[currentRoundIndex].shots.length > 0;
   };
 
   // Derive tournamentName from metadata
-  const tournamentName = metadata?.matchId && metadata?.date
-    ? `${metadata.matchId} ${new Date(metadata.date).getFullYear()}`
-    : "Unknown Tournament";
+  const tournamentName =
+    metadata?.matchId && metadata?.date
+      ? `${metadata.matchId} ${new Date(metadata.date).getFullYear()}`
+      : "Unknown Tournament";
 
   return (
-    <Paper elevation={3} style={{ padding: "20px", margin: "10px auto", maxWidth: "600px", backgroundColor: '#ffffff', borderRadius: 8 }}>
+    <Paper
+      elevation={3}
+      style={{
+        padding: "20px",
+        margin: "10px auto",
+        maxWidth: "600px",
+        backgroundColor: "#ffffff",
+        borderRadius: 8,
+      }}
+    >
       <Grid container spacing={1} sx={{ marginBottom: "10px" }}>
         <Grid item xs={4}>
-          <Typography variant="body1" sx={{ color: '#333' }}>
+          <Typography variant="body1" sx={{ color: "#333" }}>
             {tournamentName}
           </Typography>
         </Grid>
         <Grid item xs={4} sx={{ display: "flex", justifyContent: "center" }}>
-          <Paper elevation={1} sx={{ backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: 2 }}>
-            <Typography variant="body1" sx={{ color: '#333' }}>
+          <Paper
+            elevation={1}
+            sx={{
+              backgroundColor: "#f5f5f5",
+              padding: "4px 8px",
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="body1" sx={{ color: "#333" }}>
               Round {roundNumber}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Typography variant="body1" sx={{ color: '#333' }}>
+          <Typography variant="body1" sx={{ color: "#333" }}>
             {metadata?.tournamentRound || "Unknown Round"}
           </Typography>
         </Grid>
       </Grid>
       {!firstShooterSet && (
-        <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "8px",
+            margin: "10px 0",
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -482,19 +567,42 @@ const BoardState = ({
       )}
       {firstShooterSet && (
         <>
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 4, padding: '4px', margin: '10px 0', backgroundColor: '#fafafa' }}>
-            <Typography variant="body2" align="center" sx={{ color: '#333' }}>
-              {roundEnded ? "End of Round" : `${players[currentPlayerIndex + 1]?.name || "Player"} | ${players[currentPlayerIndex + 1]?.side} side | Shot ${shots[currentPlayerIndex] + 1}`}
+          <Box
+            sx={{
+              border: "1px solid #e0e0e0",
+              borderRadius: 4,
+              padding: "4px",
+              margin: "10px 0",
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <Typography variant="body2" align="center" sx={{ color: "#333" }}>
+              {roundEnded
+                ? "End of Round"
+                : `${players[currentPlayerIndex + 1]?.name || "Player"} | ${players[currentPlayerIndex + 1]?.side} side | Shot ${shots[currentPlayerIndex] + 1}`}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "center", gap: "8px", margin: "10px 0" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              margin: "10px 0",
+            }}
+          >
             <Chip
               label={`20s: ${twentyCounts[1]}`}
-              sx={{ backgroundColor: players[1]?.color || '#000', color: '#fff' }}
+              sx={{
+                backgroundColor: players[1]?.color || "#000",
+                color: "#fff",
+              }}
             />
             <Chip
               label={`20s: ${twentyCounts[2]}`}
-              sx={{ backgroundColor: players[2]?.color || '#f00', color: '#fff' }}
+              sx={{
+                backgroundColor: players[2]?.color || "#f00",
+                color: "#fff",
+              }}
             />
           </Box>
           <Grid container spacing={1} sx={{ margin: "10px 0" }}>
@@ -502,7 +610,7 @@ const BoardState = ({
               <Button
                 variant="outlined"
                 size="small"
-                sx={{ color: '#1976d2' }}
+                sx={{ color: "#1976d2" }}
                 onClick={handleUndoLastDisc}
                 disabled={boardState.length === 0}
                 startIcon={<Backspace />}
@@ -521,8 +629,16 @@ const BoardState = ({
               </Button>
             </Grid>
           </Grid>
-          <Grid container spacing={1} sx={{ margin: "10px 0", alignItems: "center" }}>
-            <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-start" }}>
+          <Grid
+            container
+            spacing={1}
+            sx={{ margin: "10px 0", alignItems: "center" }}
+          >
+            <Grid
+              item
+              xs={4}
+              sx={{ display: "flex", justifyContent: "flex-start" }}
+            >
               <CustomShooterSelection
                 activeShooterIndex={activeShooterIndex}
                 players={players}
@@ -530,7 +646,11 @@ const BoardState = ({
               />
             </Grid>
             <Grid item xs={4} /> {/* Spacer */}
-            <Grid item xs={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Grid
+              item
+              xs={4}
+              sx={{ display: "flex", justifyContent: "flex-end" }}
+            >
               <Button
                 variant="contained"
                 size="small"
@@ -547,46 +667,110 @@ const BoardState = ({
             width={600}
             height={500}
             onClick={handleCanvasClick}
-            style={{ border: "1px solid #ccc", display: "block", margin: "10px auto", backgroundColor: "#ffffff" }}
+            style={{
+              border: "1px solid #ccc",
+              display: "block",
+              margin: "10px auto",
+              backgroundColor: "#ffffff",
+            }}
           />
-          <TableContainer component={Paper} style={{ margin: "10px 0", boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <TableContainer
+            component={Paper}
+            style={{ margin: "10px 0", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+          >
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell style={{ backgroundColor: '#f5f5f5' }}></TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: '#333' }}>
+                  <TableCell style={{ backgroundColor: "#f5f5f5" }}></TableCell>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      fontWeight: "bold",
+                      color: "#333",
+                    }}
+                  >
                     {players[1]?.name || "Player 1"}
                   </TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#f5f5f5', fontWeight: "bold", color: '#333' }}>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#f5f5f5",
+                      fontWeight: "bold",
+                      color: "#333",
+                    }}
+                  >
                     {players[2]?.name || "Player 2"}
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 <TableRow>
-                  <TableCell style={{ backgroundColor: '#fafafa' }}>20s</TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                  <TableCell style={{ backgroundColor: "#fafafa" }}>
+                    20s
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[1].color,
+                    }}
+                  >
                     {twentyCounts[1]}
                   </TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[2].color,
+                    }}
+                  >
                     {twentyCounts[2]}
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell style={{ backgroundColor: '#fafafa' }}>Shots</TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                  <TableCell style={{ backgroundColor: "#fafafa" }}>
+                    Shots
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[1].color,
+                    }}
+                  >
                     {shots[0]}
                   </TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[2].color,
+                    }}
+                  >
                     {shots[1]}
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell style={{ backgroundColor: '#fafafa' }}>Match Score</TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[1].color }}>
+                  <TableCell style={{ backgroundColor: "#fafafa" }}>
+                    Match Score
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[1].color,
+                    }}
+                  >
                     {player1Points}
                   </TableCell>
-                  <TableCell align="center" style={{ backgroundColor: '#fafafa', color: players[2].color }}>
+                  <TableCell
+                    align="center"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      color: players[2].color,
+                    }}
+                  >
                     {player2Points}
                   </TableCell>
                 </TableRow>
@@ -594,8 +778,18 @@ const BoardState = ({
             </Table>
           </TableContainer>
           {roundEnded && (
-            <Paper elevation={3} style={{ padding: "20px", margin: "10px 0", backgroundColor: '#ffffff', borderRadius: 8 }}>
-              <Typography variant="h3" align="center" gutterBottom>End of Round {roundNumber}</Typography>
+            <Paper
+              elevation={3}
+              style={{
+                padding: "20px",
+                margin: "10px 0",
+                backgroundColor: "#ffffff",
+                borderRadius: 8,
+              }}
+            >
+              <Typography variant="h3" align="center" gutterBottom>
+                End of Round {roundNumber}
+              </Typography>
               <ScoreInput
                 players={players}
                 scores={scores}
