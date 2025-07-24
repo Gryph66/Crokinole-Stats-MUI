@@ -47,6 +47,7 @@ const App = () => {
     checking: true, 
     lastChecked: null 
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check API health status
   const checkApiHealth = async () => {
@@ -56,7 +57,7 @@ const App = () => {
         method: 'GET',
         timeout: 5000
       });
-      
+
       setApiStatus({
         isOnline: response.ok,
         checking: false,
@@ -169,8 +170,14 @@ const App = () => {
   };
 
   const sendDataToProcessingApp = async (data) => {
+    if (isSubmitting) {
+      alert('⚠️ Already submitting, please wait...');
+      return false;
+    }
+
+    setIsSubmitting(true);
     const api_url = "https://crokinole-shot-analytics-gryph66.replit.app/upload-classified";
-    
+
     // Generate the proper filename
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
     const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
@@ -178,20 +185,17 @@ const App = () => {
     const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
     const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
     const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
-    
+
     try {
-      const response = await fetch(api_url, {
+      const response = await fetch(`${api_url}?filename=${encodeURIComponent(filename)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...data,
-          filename: filename
-        }),
+        body: JSON.stringify(data),
         timeout: 30000
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(`✓ Successfully sent: ${result.filename || filename}`);
@@ -204,6 +208,8 @@ const App = () => {
     } catch (error) {
       alert(`✗ Failed to send: ${error.message}`);
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -217,7 +223,7 @@ const App = () => {
     const filteredRounds = rounds.filter((round, index) => {
       return index === rounds.length - 1 ? round.shots.length > 0 : true;
     });
-    
+
     const gameData = { metadata, rounds: filteredRounds };
     await sendDataToProcessingApp(gameData);
   };
@@ -289,7 +295,7 @@ const App = () => {
               <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
             </>
           )}
-          
+
           {/* API Status Display */}
           <Box sx={{ 
             position: 'fixed', 
