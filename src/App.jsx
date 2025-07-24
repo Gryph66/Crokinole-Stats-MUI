@@ -135,22 +135,16 @@ const App = () => {
     setStartingPlayer(nextStartingPlayer);
   };
 
-  const handleGameOverDownload = () => {
+  const handleGameOver = () => {
     setGameOver(true);
-    exportToJSONDownloadOnly();
+    exportToJSON();
   };
 
-  const handleGameOverSendToApp = async () => {
-    setGameOver(true);
-    await exportToJSONAndUpload();
-  };
-
-  const exportToJSONDownloadOnly = () => {
+  const exportToJSON = () => {
     const filteredRounds = rounds.filter((round, index) => {
       return index === rounds.length - 1 ? round.shots.length > 0 : true;
     });
 
-    const gameData = { metadata, rounds: filteredRounds };
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
     const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
     const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
@@ -158,9 +152,8 @@ const App = () => {
     const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
     const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
 
-    // Download JSON file locally
     const blob = new Blob(
-      [JSON.stringify(gameData, null, 2)],
+      [JSON.stringify({ metadata, rounds: filteredRounds }, null, 2)],
       { type: "application/json" },
     );
     const url = URL.createObjectURL(blob);
@@ -170,19 +163,7 @@ const App = () => {
     a.click();
     URL.revokeObjectURL(url);
 
-    alert("JSON file downloaded successfully!");
     return filename;
-  };
-
-  const exportToJSONAndUpload = async () => {
-    const filteredRounds = rounds.filter((round, index) => {
-      return index === rounds.length - 1 ? round.shots.length > 0 : true;
-    });
-
-    const gameData = { metadata, rounds: filteredRounds };
-
-    // Upload to processing app
-    await uploadToProcessingApp(gameData);
   };
 
   const getFilename = () => {
@@ -193,17 +174,6 @@ const App = () => {
     const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
     const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
     return `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
-  };
-
-  const uploadToProcessingApp = async (gameData) => {
-    try {
-      // Implement your upload logic here
-      console.log("Uploading data:", gameData);
-      alert("Uploading to processing app - Implementation Needed"); // placeholder
-    } catch (error) {
-      console.error("Error uploading data:", error);
-      alert("Upload failed. Check console for details.");
-    }
   };
 
   return (
@@ -220,7 +190,7 @@ const App = () => {
                 shots={shots}
                 startingPlayer={startingPlayer}
                 setStartingPlayer={setStartingPlayer}
-                exportToJSON={exportToJSONDownloadOnly}
+                exportToJSON={exportToJSON}
                 resetShots={() => setShots({ 0: 0, 1: 0 })}
                 onEndRound={handleEndRound}
                 rounds={rounds}
@@ -230,8 +200,7 @@ const App = () => {
               <Typography variant="subtitle1" align="center" style={{ margin: "10px 0", color: '#333' }}>
                 Export Filename: {getFilename()}
               </Typography>
-              <button onClick={handleGameOverDownload}>End Game - Download</button>
-              <button onClick={handleGameOverSendToApp}>End Game - Send To App</button>
+              <button onClick={handleGameOver}>End Game</button>
               <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
             </>
           )}
