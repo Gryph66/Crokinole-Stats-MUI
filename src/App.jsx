@@ -1,8 +1,8 @@
-import React, { useState, Component } from "react";
+import React, { useState, useEffect, Component } from "react";
 import MetadataForm from "./MetadataForm";
 import BoardState from "./BoardState";
 import theme from './theme';
-import { ThemeProvider, Typography, Box } from '@mui/material';
+import { ThemeProvider, Typography, Box, Chip } from '@mui/material';
 
 // Simple error boundary
 class ErrorBoundary extends Component {
@@ -42,6 +42,41 @@ const App = () => {
   const [shots, setShots] = useState({ 0: 0, 1: 0 });
   const [startingPlayer, setStartingPlayer] = useState(null);
   const [gameOver, setGameOver] = useState(false);
+  const [apiStatus, setApiStatus] = useState({ 
+    isOnline: false, 
+    checking: true, 
+    lastChecked: null 
+  });
+
+  // Check API health status
+  const checkApiHealth = async () => {
+    setApiStatus(prev => ({ ...prev, checking: true }));
+    try {
+      const response = await fetch("https://crokinole-shot-analytics-gryph66.replit.app/health", {
+        method: 'GET',
+        timeout: 5000
+      });
+      
+      setApiStatus({
+        isOnline: response.ok,
+        checking: false,
+        lastChecked: new Date().toLocaleTimeString()
+      });
+    } catch (error) {
+      setApiStatus({
+        isOnline: false,
+        checking: false,
+        lastChecked: new Date().toLocaleTimeString()
+      });
+    }
+  };
+
+  // Check API status on component mount and every 30 seconds
+  useEffect(() => {
+    checkApiHealth();
+    const interval = setInterval(checkApiHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMetadataSubmit = (data) => {
     if (data.players && data.players["1"] && data.players["2"]) {
@@ -245,6 +280,29 @@ const App = () => {
               <pre>{JSON.stringify({ metadata, rounds }, null, 2)}</pre>
             </>
           )}
+          
+          {/* API Status Display */}
+          <Box sx={{ 
+            position: 'fixed', 
+            bottom: 10, 
+            right: 10, 
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Chip
+              label={apiStatus.checking ? "Checking API..." : apiStatus.isOnline ? "API Online" : "API Offline"}
+              color={apiStatus.checking ? "default" : apiStatus.isOnline ? "success" : "error"}
+              size="small"
+              variant="filled"
+            />
+            {apiStatus.lastChecked && (
+              <Typography variant="caption" sx={{ color: '#666', fontSize: '0.6rem' }}>
+                {apiStatus.lastChecked}
+              </Typography>
+            )}
+          </Box>
         </div>
       </ErrorBoundary>
     </ThemeProvider>
