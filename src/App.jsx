@@ -136,7 +136,7 @@ const App = () => {
   };
 
   const sendDataToProcessingApp = async (data) => {
-    const api_url = "https://replit.com/@gryph66/Crokinole-Shot-Analytics/upload-classified";
+    const api_url = "https://crokinole-shot-analytics.gryph66.replit.dev/upload-classified";
     
     try {
       const response = await fetch(api_url, {
