@@ -48,6 +48,7 @@ const App = () => {
     lastChecked: null 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingDialog, setLoadingDialog] = useState({ open: false, message: '', progress: 0 });
 
   // Check API health status
   const checkApiHealth = async () => {
@@ -175,6 +176,13 @@ const App = () => {
       return false;
     }
 
+    // Show loading dialog immediately
+    setLoadingDialog({
+      open: true,
+      message: 'Preparing data for upload...',
+      progress: 10
+    });
+
     setIsSubmitting(true);
     const api_url = "https://crokinole-shot-analytics-gryph66.replit.app/upload-classified";
 
@@ -183,6 +191,13 @@ const App = () => {
     console.log('Sending filename to API:', filename);
 
     try {
+      // Update progress - preparing request
+      setLoadingDialog(prev => ({
+        ...prev,
+        message: 'Connecting to API...',
+        progress: 30
+      }));
+
       const response = await fetch(`${api_url}?filename=${encodeURIComponent(filename)}`, {
         method: 'POST',
         headers: {
@@ -195,16 +210,38 @@ const App = () => {
         timeout: 30000
       });
 
+      // Update progress - processing response
+      setLoadingDialog(prev => ({
+        ...prev,
+        message: 'Processing response...',
+        progress: 80
+      }));
+
       if (response.ok) {
         const result = await response.json();
-        alert(`✓ Successfully sent: ${filename}`);
+
+        // Success - complete progress
+        setLoadingDialog(prev => ({
+          ...prev,
+          message: 'Upload successful!',
+          progress: 100
+        }));
+
+        // Brief delay to show success, then close
+        setTimeout(() => {
+          setLoadingDialog({ open: false, message: '', progress: 0 });
+          alert(`✓ Successfully sent: ${filename}`);
+        }, 500);
+
         return true;
       } else {
         const errorText = await response.text();
+        setLoadingDialog({ open: false, message: '', progress: 0 });
         alert(`✗ Error: ${response.status} - ${errorText}`);
         return false;
       }
     } catch (error) {
+      setLoadingDialog({ open: false, message: '', progress: 0 });
       alert(`✗ Failed to send: ${error.message}`);
       return false;
     } finally {
