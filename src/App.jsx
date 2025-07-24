@@ -2,7 +2,17 @@ import React, { useState, useEffect, Component } from "react";
 import MetadataForm from "./MetadataForm";
 import BoardState from "./BoardState";
 import theme from './theme';
-import { ThemeProvider, Typography, Box, Chip } from '@mui/material';
+import { 
+  ThemeProvider, 
+  Typography, 
+  Box, 
+  Chip, 
+  Dialog, 
+  DialogContent, 
+  DialogTitle, 
+  CircularProgress, 
+  LinearProgress 
+} from '@mui/material';
 
 // Simple error boundary
 class ErrorBoundary extends Component {
@@ -359,6 +369,41 @@ const App = () => {
               </Typography>
             )}
           </Box>
+
+          {/* Loading Dialog */}
+          <Dialog 
+            open={loadingDialog.open} 
+            disableEscapeKeyDown
+            sx={{ zIndex: 9999 }}
+          >
+            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+              <Typography variant="h6">Uploading Game Data</Typography>
+            </DialogTitle>
+            <DialogContent sx={{ 
+              minWidth: 300, 
+              textAlign: 'center', 
+              pb: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2
+            }}>
+              <CircularProgress size={60} thickness={4} />
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                {loadingDialog.message}
+              </Typography>
+              <Box sx={{ width: '100%', mt: 1 }}>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={loadingDialog.progress} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                  {loadingDialog.progress}% Complete
+                </Typography>
+              </Box>
+            </DialogContent>
+          </Dialog>
         </div>
       </ErrorBoundary>
     </ThemeProvider>
