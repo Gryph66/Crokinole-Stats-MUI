@@ -233,12 +233,14 @@ const App = () => {
       return index === rounds.length - 1 ? round.shots.length > 0 : true;
     });
 
+    console.log('Export metadata:', metadata);
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
     const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
     const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
     const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
     const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
     const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
+    console.log('Export filename:', filename);
 
     const blob = new Blob(
       [JSON.stringify({ metadata, rounds: filteredRounds }, null, 2)],
@@ -256,12 +258,15 @@ const App = () => {
 
   const getFilename = () => {
     if (!metadata) return "No metadata available";
+    console.log('Export metadata:', metadata);
     const player1Name = metadata?.players?.[1]?.name?.split(' ')?.[0] || 'Player1';
     const player2Name = metadata?.players?.[2]?.name?.split(' ')?.[0] || 'Player2';
     const year = metadata?.date ? new Date(metadata.date).getFullYear() : 'UnknownYear';
     const matchId = metadata?.matchId?.replace(/\s+/g, '') || 'UnknownMatch';
     const tournamentRound = metadata?.tournamentRound?.replace(/\s+/g, '') || 'UnknownRound';
-    return `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
+    const filename = `classified_${player1Name}${player2Name}_${year}${matchId}_${tournamentRound}.json`;
+    console.log('Export filename:', filename);
+    return filename;
   };
 
   return (
