@@ -71,11 +71,9 @@ const App = () => {
     }
   };
 
-  // Check API status on component mount and every 30 seconds
+  // Check API status only on component mount
   useEffect(() => {
     checkApiHealth();
-    const interval = setInterval(checkApiHealth, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleMetadataSubmit = (data) => {
