@@ -17,11 +17,6 @@
 ---
 **Crokinole Stats MUI** is a modern, web-based application for tracking and analyzing Crokinole matches. Built with React and Material-UI, it provides an intuitive interface for inputting game metadata, recording shots on an interactive virtual board, managing scores, and exporting detailed game data as JSON files. Perfect for tournament organizers, players, and enthusiasts, it offers a polished, compact, and responsive design for comprehensive match statistics.
 
-## Live Demo
-
-Try the app live at [https://crokinole-shots.replit.app/](https://crokinole-shots.replit.app/).  
-*Note*: Hosted on Replit, the demo may require a refresh to ensure images (e.g., Crokinole board) load correctly.
-
 ## Video Demonstration
 
 Watch a demonstration of an earlier version tracking a match from the Turtle Island 2017 tournament:  
