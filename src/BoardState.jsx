@@ -672,6 +672,11 @@ const BoardState = ({
               display: "block",
               margin: "10px auto",
               backgroundColor: "#ffffff",
+              minWidth: "600px",
+              minHeight: "500px",
+              maxWidth: "100%",
+              height: "auto",
+              aspectRatio: "6/5",
             }}
           />
           <TableContainer
