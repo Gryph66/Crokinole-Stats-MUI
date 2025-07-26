@@ -20,7 +20,7 @@
 ## Video Demonstration
 
 Watch a demonstration of an earlier version tracking a match from the Turtle Island 2017 tournament:  
-[View Video on Dropbox](https://www.dropbox.com/scl/fi/de8f3a9ac0grrsuzl2bll/example_shottracking_turtleisland2017.mov?rlkey=s7lh3huohseutsv3wenwh7odb&st=q53sg3sy&dl=0)  
+[View Video on Dropbox](https://www.dropbox.com/scl/fi/hrnmv71afzp201gfsl9h5/ShotTracking_Rev6Demo.mov?rlkey=11ze4ouccxhk2r48ylnd981b9&dl=0)  
 *Note*: The current version includes an enhanced UI with a compact metadata form, centered player selection with disc indicators, disabled "Save Shot" button for empty shots, and other improvements.
 
 ## Features
